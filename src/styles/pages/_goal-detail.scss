@@ -181,53 +181,8 @@
       }
     }
 
-    .add-task-form {
+    .task-form-container {
       margin-bottom: $spacing-xl;
-      padding: $spacing-lg;
-      background: var(--color-surface);
-      border-radius: $border-radius-lg;
-      border: 2px solid var(--color-border);
-
-      .form-group {
-        display: flex;
-        gap: $spacing-md;
-        align-items: center;
-
-        @include mobile {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        input {
-          flex: 1;
-          padding: $spacing-md;
-          border: 2px solid var(--color-border);
-          border-radius: $border-radius-md;
-          background: var(--color-background);
-          color: var(--color-text);
-          font-size: $font-size-base;
-          transition: all $transition-fast;
-
-          &:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
-          }
-
-          &::placeholder {
-            color: var(--color-text-muted);
-          }
-        }
-
-        .btn {
-          flex-shrink: 0;
-          min-width: 100px;
-
-          @include mobile {
-            width: 100%;
-          }
-        }
-      }
     }
 
     .tasks-list {

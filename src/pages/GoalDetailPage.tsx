@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import TaskBlock from '../components/design/TaskBlock/TaskBlock';
+import TaskForm from '../components/design/TaskForm/TaskForm';
+
+interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  isRewardTrigger?: boolean;
+  rewardNote?: string;
+  locked?: boolean;
+  order: number;
+}
 
 interface TaskBlock {
   id: string;
@@ -10,16 +22,6 @@ interface TaskBlock {
   isRewardTrigger?: boolean;
   rewardNote?: string;
   subtasks?: Subtask[];
-  order: number;
-}
-
-interface Subtask {
-  id: string;
-  title: string;
-  completed: boolean;
-  isRewardTrigger?: boolean;
-  rewardNote?: string;
-  locked?: boolean;
   order: number;
 }
 
@@ -38,12 +40,19 @@ interface Goal {
   updatedAt: string;
 }
 
+interface TaskFormData {
+  title: string;
+  type: 'single' | 'grouped';
+  isRewardTrigger?: boolean;
+  rewardNote?: string;
+  subtasks: { id: string; title: string; isRewardTrigger?: boolean; rewardNote?: string }[];
+}
+
 const GoalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [goal, setGoal] = useState<Goal | null>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [showAddTask, setShowAddTask] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -59,8 +68,24 @@ const GoalDetailPage: React.FC = () => {
 
   const calculateProgress = (taskBlocks: TaskBlock[]): number => {
     if (taskBlocks.length === 0) return 0;
-    const completedTasks = taskBlocks.filter(task => task.completed).length;
-    return Math.round((completedTasks / taskBlocks.length) * 100);
+    
+    let totalTasks = 0;
+    let completedTasks = 0;
+    
+    taskBlocks.forEach(task => {
+      if (task.type === 'single') {
+        totalTasks++;
+        if (task.completed) completedTasks++;
+      } else if (task.type === 'grouped') {
+        const subtasks = task.subtasks || [];
+        if (subtasks.length > 0) {
+          totalTasks += subtasks.length;
+          completedTasks += subtasks.filter(subtask => subtask.completed).length;
+        }
+      }
+    });
+    
+    return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   };
 
   const updateGoal = (updatedGoal: Goal) => {
@@ -72,16 +97,27 @@ const GoalDetailPage: React.FC = () => {
     setGoal(updatedGoal);
   };
 
-  const addTask = () => {
-    if (!newTaskTitle.trim() || !goal) return;
+  const addTask = (taskData: TaskFormData) => {
+    if (!goal) return;
 
     const newTask: TaskBlock = {
       id: Date.now().toString(),
-      title: newTaskTitle.trim(),
-      type: 'single',
+      title: taskData.title,
+      type: taskData.type,
       completed: false,
       locked: goal.stepByStep && goal.taskBlocks.length > 0 ? true : false,
+      isRewardTrigger: taskData.isRewardTrigger,
+      rewardNote: taskData.rewardNote,
       order: goal.taskBlocks.length,
+      subtasks: taskData.type === 'grouped' ? taskData.subtasks.map((subtask, index) => ({
+        id: `${Date.now()}-${index}`,
+        title: subtask.title,
+        completed: false,
+        locked: goal.stepByStep && index > 0 ? true : false,
+        isRewardTrigger: subtask.isRewardTrigger,
+        rewardNote: subtask.rewardNote,
+        order: index,
+      })) : undefined,
     };
 
     const updatedGoal = {
@@ -92,8 +128,7 @@ const GoalDetailPage: React.FC = () => {
     };
 
     updateGoal(updatedGoal);
-    setNewTaskTitle('');
-    setShowAddTask(false);
+    setShowTaskForm(false);
   };
 
   const toggleTask = (taskId: string) => {
@@ -128,12 +163,127 @@ const GoalDetailPage: React.FC = () => {
     updateGoal(updatedGoal);
   };
 
+  const toggleSubtask = (taskId: string, subtaskId: string) => {
+    if (!goal) return;
+
+    const updatedTaskBlocks = goal.taskBlocks.map(task => {
+      if (task.id === taskId && task.subtasks) {
+        const updatedSubtasks = task.subtasks.map(subtask => {
+          if (subtask.id === subtaskId) {
+            const updatedSubtask = { ...subtask, completed: !subtask.completed };
+            
+            // If step-by-step mode is enabled, unlock next subtask
+            if (goal.stepByStep && updatedSubtask.completed && task.subtasks) {
+              const currentIndex = task.subtasks.findIndex(s => s.id === subtaskId);
+              const nextSubtask = task.subtasks[currentIndex + 1];
+              if (nextSubtask && nextSubtask.locked) {
+                nextSubtask.locked = false;
+              }
+            }
+            
+            return updatedSubtask;
+          }
+          return subtask;
+        });
+
+        // Check if all subtasks are completed
+        const allSubtasksCompleted = updatedSubtasks.every(subtask => subtask.completed);
+        
+        return {
+          ...task,
+          subtasks: updatedSubtasks,
+          completed: allSubtasksCompleted,
+        };
+      }
+      return task;
+    });
+
+    const updatedGoal = {
+      ...goal,
+      taskBlocks: updatedTaskBlocks,
+      progress: calculateProgress(updatedTaskBlocks),
+      completed: updatedTaskBlocks.every(task => task.completed),
+      updatedAt: new Date().toISOString(),
+    };
+
+    updateGoal(updatedGoal);
+  };
+
   const deleteTask = (taskId: string) => {
     if (!goal) return;
 
     const updatedTaskBlocks = goal.taskBlocks
       .filter(task => task.id !== taskId)
       .map((task, index) => ({ ...task, order: index }));
+
+    const updatedGoal = {
+      ...goal,
+      taskBlocks: updatedTaskBlocks,
+      progress: calculateProgress(updatedTaskBlocks),
+      updatedAt: new Date().toISOString(),
+    };
+
+    updateGoal(updatedGoal);
+  };
+
+  const editTask = (taskId: string, newTitle: string) => {
+    if (!goal) return;
+
+    const updatedTaskBlocks = goal.taskBlocks.map(task =>
+      task.id === taskId ? { ...task, title: newTitle } : task
+    );
+
+    const updatedGoal = {
+      ...goal,
+      taskBlocks: updatedTaskBlocks,
+      updatedAt: new Date().toISOString(),
+    };
+
+    updateGoal(updatedGoal);
+  };
+
+  const editSubtask = (taskId: string, subtaskId: string, newTitle: string) => {
+    if (!goal) return;
+
+    const updatedTaskBlocks = goal.taskBlocks.map(task => {
+      if (task.id === taskId && task.subtasks) {
+        const updatedSubtasks = task.subtasks.map(subtask =>
+          subtask.id === subtaskId ? { ...subtask, title: newTitle } : subtask
+        );
+        return { ...task, subtasks: updatedSubtasks };
+      }
+      return task;
+    });
+
+    const updatedGoal = {
+      ...goal,
+      taskBlocks: updatedTaskBlocks,
+      updatedAt: new Date().toISOString(),
+    };
+
+    updateGoal(updatedGoal);
+  };
+
+  const deleteSubtask = (taskId: string, subtaskId: string) => {
+    if (!goal) return;
+
+    const updatedTaskBlocks = goal.taskBlocks.map(task => {
+      if (task.id === taskId && task.subtasks) {
+        const updatedSubtasks = task.subtasks
+          .filter(subtask => subtask.id !== subtaskId)
+          .map((subtask, index) => ({ ...subtask, order: index }));
+        
+        // Check if all remaining subtasks are completed
+        const allSubtasksCompleted = updatedSubtasks.every(subtask => subtask.completed);
+        
+        return {
+          ...task,
+          subtasks: updatedSubtasks,
+          completed: allSubtasksCompleted,
+        };
+      }
+      return task;
+    });
 
     const updatedGoal = {
       ...goal,
@@ -238,30 +388,19 @@ const GoalDetailPage: React.FC = () => {
             <h2>Tasks ({goal.taskBlocks.length})</h2>
             <button 
               className="btn btn--primary"
-              onClick={() => setShowAddTask(!showAddTask)}
+              onClick={() => setShowTaskForm(!showTaskForm)}
             >
-              {showAddTask ? 'Cancel' : '+ Add Task'}
+              {showTaskForm ? 'Cancel' : '+ Add Task'}
             </button>
           </div>
 
-          {showAddTask && (
-            <div className="add-task-form">
-              <div className="form-group">
-                <input
-                  type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Enter task title"
-                  onKeyPress={(e) => e.key === 'Enter' && addTask()}
-                />
-                <button 
-                  className="btn btn--primary"
-                  onClick={addTask}
-                  disabled={!newTaskTitle.trim()}
-                >
-                  Add Task
-                </button>
-              </div>
+          {showTaskForm && (
+            <div className="task-form-container">
+              <TaskForm
+                onSubmit={addTask}
+                onCancel={() => setShowTaskForm(false)}
+                stepByStepMode={goal.stepByStep}
+              />
             </div>
           )}
 
@@ -271,38 +410,26 @@ const GoalDetailPage: React.FC = () => {
                 <p>No tasks yet. Add your first task to get started!</p>
               </div>
             ) : (
-              goal.taskBlocks.map((task, index) => (
-                <div 
-                  key={task.id} 
-                  className={`task-item ${task.completed ? 'completed' : ''} ${task.locked ? 'locked' : ''}`}
-                >
-                  <div className="task-content">
-                    <label className="task-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => toggleTask(task.id)}
-                        disabled={task.locked}
-                      />
-                      <span className="checkmark"></span>
-                    </label>
-                    
-                    <div className="task-details">
-                      <span className="task-title">{task.title}</span>
-                      {task.locked && (
-                        <span className="locked-indicator">🔒 Locked</span>
-                      )}
-                    </div>
-                    
-                    <button 
-                      className="delete-task-btn"
-                      onClick={() => deleteTask(task.id)}
-                      title="Delete task"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
+              goal.taskBlocks.map((task) => (
+                <TaskBlock
+                  key={task.id}
+                  id={task.id}
+                  title={task.title}
+                  type={task.type}
+                  completed={task.completed}
+                  locked={task.locked}
+                  isRewardTrigger={task.isRewardTrigger}
+                  rewardNote={task.rewardNote}
+                  subtasks={task.subtasks}
+                  order={task.order}
+                  stepByStepMode={goal.stepByStep}
+                  onToggle={toggleTask}
+                  onSubtaskToggle={toggleSubtask}
+                  onDelete={deleteTask}
+                  onEdit={editTask}
+                  onSubtaskEdit={editSubtask}
+                  onSubtaskDelete={deleteSubtask}
+                />
               ))
             )}
           </div>

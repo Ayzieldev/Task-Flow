@@ -10,7 +10,7 @@ const HomePage: React.FC = () => {
             <span>✨ Trusted by 10,000+ users</span>
           </div>
           
-          <h1>Flexible Goal Tracker</h1>
+          <h1 className='hero__title'>Flexible Goal Tracker</h1>
           <p className="hero__subtitle">Track your goals with flexible task management and rewarding progress</p>
           
           <div className="hero__stats">
