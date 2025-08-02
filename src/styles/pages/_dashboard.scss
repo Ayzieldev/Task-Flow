@@ -282,8 +282,8 @@
 
           &__completed {
             position: absolute;
-            top: -1rem;
-            left: $spacing-md;
+            top: $spacing-xl;
+            right: 7rem;
             background: var(--color-success);
             color: white;
             padding: $spacing-xs $spacing-sm;
