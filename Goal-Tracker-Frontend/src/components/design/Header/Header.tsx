@@ -21,7 +21,7 @@ const Header: React.FC = () => {
             <Link to="/" className="header__action-btn">
              Register
             </Link>
-            <Link to="/create" className="header__action-btn">
+            <Link to="/dashboard" className="header__action-btn">
               Log In
             </Link>
             <button
