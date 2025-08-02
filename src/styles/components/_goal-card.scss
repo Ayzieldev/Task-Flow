@@ -1,0 +1,169 @@
+@use '@/styles/abstracts/variables' as *;
+@use '@/styles/abstracts/mixins' as *;
+
+.goal-card {
+  @include card-elevated;
+  padding: $spacing-lg;
+  cursor: pointer;
+  transition: all $transition-normal;
+  background: var(--gradient-card);
+  border: 1px solid var(--color-border);
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                rgba(255, 255, 255, 0.05) 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    
+    &::after {
+      opacity: 1;
+    }
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity $transition-normal;
+    z-index: -1;
+  }
+  
+  &__header {
+    @include flex-between;
+    margin-bottom: $spacing-md;
+    position: relative;
+    z-index: 1;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+  
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text);
+    margin: 0;
+    @include truncate;
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    flex: 1;
+  }
+  
+  &__priority {
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $border-radius-full;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--gradient-primary);
+      opacity: 0.1;
+      z-index: -1;
+    }
+    
+    &--low {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+      color: var(--color-success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    &--medium {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+      color: var(--color-warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    &--high {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+      color: var(--color-error);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+  }
+  
+  
+  &__description {
+    color: var(--color-text-muted);
+    margin-bottom: $spacing-md;
+    @include truncate-multiline(2);
+    position: relative;
+    z-index: 1;
+  }
+  
+  &__progress {
+    margin-bottom: $spacing-md;
+    position: relative;
+    z-index: 1;
+  }
+  
+  &__footer {
+    @include flex-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  
+  &__deadline {
+    font-size: $font-size-sm;
+    color: var(--color-text-muted);
+  }
+  
+  &__actions {
+    @include flex-end;
+    gap: $spacing-sm;
+  }
+  
+  &__action-btn {
+    padding: $spacing-xs;
+    border-radius: $border-radius-sm;
+    transition: all $transition-fast;
+    background: var(--gradient-surface);
+    border: 1px solid var(--color-border);
+    
+    &:hover {
+      background: var(--gradient-primary);
+      transform: scale(1.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+@keyframes completed-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+} 

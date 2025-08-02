@@ -1,0 +1,33 @@
+// Abstracts
+@use 'abstracts/variables';
+@use 'abstracts/mixins';
+
+// Themes
+@use 'themes/light';
+@use 'themes/dark';
+
+// Base
+@use 'base/reset';
+
+// Components
+@use 'components/button';
+@use 'components/input';
+@use 'components/modal';
+@use 'components/progress-bar';
+@use 'components/task-block';
+@use 'components/goal-card';
+@use 'components/reward-animation';
+
+// Layout
+@use 'layout/app';
+@use 'layout/navigation';
+@use 'layout/grid';
+
+// Pages
+@use 'pages/home';
+@use 'pages/dashboard';
+@use 'pages/goal-detail';
+@use 'pages/goal-creation';
+
+// Vendors (third-party styles)
+@use 'vendors/normalize'; 
