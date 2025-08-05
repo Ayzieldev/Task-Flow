@@ -6,6 +6,13 @@
   background: var(--color-background);
   padding: $spacing-xl 0;
 
+  // When embedded in dashboard, use different styling
+  .dashboard-page & {
+    min-height: auto;
+    background: transparent;
+    padding: 0;
+  }
+
   .container {
     max-width: $container-max-width;
     margin: 0 auto;
@@ -39,10 +46,20 @@
         margin: 0;
       }
     }
+
+    // Hide header when embedded in dashboard
+    .dashboard-page & {
+      display: none;
+    }
   }
 
   .statistics-section {
     margin-bottom: $spacing-xl;
+
+    // Hide statistics when embedded in dashboard
+    .dashboard-page & {
+      display: none;
+    }
 
     .stats-grid {
       display: grid;

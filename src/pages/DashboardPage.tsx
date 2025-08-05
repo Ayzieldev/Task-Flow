@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useGoals } from '@/hooks/useGoals';
-import { Goal } from '@/types';
+import { useWeeklyTasks } from '@/hooks/useTasks';
+import { Goal, WeeklyTask } from '@/types';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
 import DailyTasksPage from './DailyTasksPage';
@@ -22,9 +23,48 @@ import DailyTasksPage from './DailyTasksPage';
     });
   };
 
+  const getDayEmoji = (day: string) => {
+    const dayEmojis: Record<string, string> = {
+      monday: '📅',
+      tuesday: '📅',
+      wednesday: '📅',
+      thursday: '📅',
+      friday: '📅',
+      saturday: '🎉',
+      sunday: '☀️',
+    };
+    return dayEmojis[day] || '📅';
+  };
+
+  const formatDayName = (day: string) => {
+    return day.charAt(0).toUpperCase() + day.slice(1);
+  };
+
+  const groupTasksByDay = (tasks: WeeklyTask[]) => {
+    const grouped: Record<string, WeeklyTask[]> = {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    };
+
+    tasks?.forEach(task => {
+      if (grouped[task.dayOfWeek]) {
+        grouped[task.dayOfWeek].push(task);
+      }
+    });
+
+    return grouped;
+  };
+
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'goals' | 'daily' | 'weekly'>('goals');
   const { data: goals = [], isLoading, error } = useGoals();
+  const { data: weeklyTasks } = useWeeklyTasks();
 
   const getTotalProgress = () => {
     if (goals.length === 0) return 0;
@@ -222,13 +262,78 @@ const DashboardPage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'weekly' && (
+                                {activeTab === 'weekly' && (
             <div className="weekly-tasks-section">
-              <div className="empty-state">
-                <div className="empty-icon">📊</div>
-                <h3>Weekly Tasks Coming Soon</h3>
-                <p>Weekly task management will be available in the next update!</p>
+              <div className="weekly-tasks-grid">
+                {Object.entries(groupTasksByDay(weeklyTasks || [])).map(([day, tasks]) => {
+                  const completedTasks = tasks.filter(task => task.completed);
+                  const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+                  
+                  return (
+                    <div 
+                      key={day} 
+                      className="day-container clickable"
+                      onClick={() => navigate(`/weekly-tasks/${day}`)}
+                    >
+                      <div className="day-header">
+                        <div className="day-info">
+                          <span className="day-icon">{getDayEmoji(day)}</span>
+                          <h3 className="day-title">{formatDayName(day)}</h3>
+                        </div>
+                        <div className="day-actions">
+                          <span className="task-count">{tasks.length} tasks</span>
+                          <span className="view-tasks">View Tasks →</span>
+                        </div>
+                      </div>
+
+                      <div className="day-content">
+                        <div className="day-description">
+                          {tasks.length === 0 ? (
+                            <p>No tasks scheduled for {formatDayName(day).toLowerCase()}</p>
+                          ) : (
+                            <p>Complete your {formatDayName(day).toLowerCase()} tasks</p>
+                          )}
+                        </div>
+
+                        <div className="day-progress">
+                          <div className="progress-section">
+                            <div className="progress-bar">
+                              <div 
+                                className="progress-fill" 
+                                style={{ width: `${completionRate}%` }}
+                              ></div>
+                            </div>
+                            <span className="progress-text">{completionRate}% Complete</span>
+                          </div>
+                        </div>
+
+                        <div className="day-stats">
+                          <div className="stat-item">
+                            <span className="stat-number">{tasks.length}</span>
+                            <span className="stat-label">Total Tasks</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{completedTasks.length}</span>
+                            <span className="stat-label">Completed</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{tasks.length - completedTasks.length}</span>
+                            <span className="stat-label">Remaining</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
+              {(weeklyTasks || []).length === 0 && (
+                <div className="empty-state">
+                  <div className="empty-icon">📅</div>
+                  <h3>No weekly tasks yet</h3>
+                  <p>Start planning your week by clicking on any day!</p>
+                </div>
+              )}
             </div>
           )}
         </div>

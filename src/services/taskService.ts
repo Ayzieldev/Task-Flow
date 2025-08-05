@@ -122,7 +122,63 @@ export const taskService = {
   // Get all weekly tasks
   async getWeeklyTasks(): Promise<WeeklyTask[]> {
     await delay(200);
-    const tasks = getFromStorage<WeeklyTask>(WEEKLY_TASKS_STORAGE_KEY);
+    let tasks = getFromStorage<WeeklyTask>(WEEKLY_TASKS_STORAGE_KEY);
+    
+    // Initialize with sample data if empty
+    if (tasks.length === 0) {
+      const sampleTasks: WeeklyTask[] = [
+        {
+          id: '1',
+          title: 'Team meeting preparation',
+          description: 'Review agenda and prepare talking points',
+          dayOfWeek: 'monday',
+          completed: false,
+          streak: 0,
+          scheduledTime: '09:00',
+          order: 0,
+          createdAt: new Date(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          title: 'Grocery shopping',
+          description: 'Buy groceries for the week',
+          dayOfWeek: 'tuesday',
+          completed: false,
+          streak: 0,
+          scheduledTime: '18:00',
+          order: 1,
+          createdAt: new Date(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          title: 'Gym workout',
+          description: 'Hit the gym for strength training',
+          dayOfWeek: 'wednesday',
+          completed: false,
+          streak: 0,
+          scheduledTime: '17:00',
+          order: 2,
+          createdAt: new Date(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: '4',
+          title: 'Movie night',
+          description: 'Watch a new movie with friends',
+          dayOfWeek: 'friday',
+          completed: false,
+          streak: 0,
+          scheduledTime: '20:00',
+          order: 3,
+          createdAt: new Date(),
+          updatedAt: new Date().toISOString(),
+        }
+      ];
+      saveToStorage(WEEKLY_TASKS_STORAGE_KEY, sampleTasks);
+      tasks = sampleTasks;
+    }
     
     // Check if tasks need reset
     const config = taskService.getTaskConfiguration('weekly');

@@ -225,6 +225,7 @@ export interface WeeklyTask {
   streak: number;
   isRewardTrigger?: boolean;
   rewardNote?: string;
+  scheduledTime?: string; // "HH:MM" format for when to complete the task
   order: number;
   createdAt: Date;
   updatedAt: string;
