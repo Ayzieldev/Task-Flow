@@ -67,7 +67,7 @@ const GoalDetailPage: React.FC = () => {
       title: taskData.title,
       type: taskData.type,
       completed: false,
-      locked: goal.stepByStep && goal.taskBlocks.length > 0 ? true : false,
+      locked: goal.stepByStep ? false : false, // Newest task is always unlocked
       isRewardTrigger: taskData.isRewardTrigger,
       rewardNote: taskData.rewardNote,
       order: goal.taskBlocks.length,
@@ -75,22 +75,46 @@ const GoalDetailPage: React.FC = () => {
         id: `${Date.now()}-${index}`,
         title: subtask.title,
         completed: false,
-        locked: goal.stepByStep && index > 0 ? true : false,
+        locked: goal.stepByStep && index > 0 ? true : false, // First subtask unlocked, rest locked
         isRewardTrigger: subtask.isRewardTrigger,
         rewardNote: subtask.rewardNote,
         order: index,
       })) : undefined,
     };
 
-    addTaskBlockMutation.mutate(
-      { goalId: goal.id, taskBlock: newTaskBlock },
-      {
-        onSuccess: () => {
-          updateGoalProgressMutation.mutate(goal.id);
-          setShowTaskForm(false);
-        },
-      }
-    );
+    // If step-by-step mode is enabled, lock all existing tasks
+    if (goal.stepByStep && goal.taskBlocks.length > 0) {
+      // Lock all existing tasks first
+      const lockPromises = goal.taskBlocks.map(task => 
+        updateTaskBlockMutation.mutateAsync(
+          { goalId: goal.id, taskBlockId: task.id, updates: { locked: true } }
+        )
+      );
+
+      // After locking existing tasks, add the new task
+      Promise.all(lockPromises).then(() => {
+        addTaskBlockMutation.mutate(
+          { goalId: goal.id, taskBlock: newTaskBlock },
+          {
+            onSuccess: () => {
+              updateGoalProgressMutation.mutate(goal.id);
+              setShowTaskForm(false);
+            },
+          }
+        );
+      });
+    } else {
+      // If not step-by-step mode, just add the task normally
+      addTaskBlockMutation.mutate(
+        { goalId: goal.id, taskBlock: newTaskBlock },
+        {
+          onSuccess: () => {
+            updateGoalProgressMutation.mutate(goal.id);
+            setShowTaskForm(false);
+          },
+        }
+      );
+    }
   };
 
   const toggleTask = (taskId: string) => {
@@ -101,17 +125,17 @@ const GoalDetailPage: React.FC = () => {
 
     const updatedTask = { ...task, completed: !task.completed };
     
-    // If step-by-step mode is enabled and task is being completed, unlock next task
+    // If step-by-step mode is enabled and task is being completed, unlock previous task
     if (goal.stepByStep && updatedTask.completed) {
       const currentIndex = goal.taskBlocks.findIndex(t => t.id === taskId);
-      const nextTask = goal.taskBlocks[currentIndex + 1];
-      if (nextTask && nextTask.locked) {
-        // Update the next task to unlock it
+      const previousTask = goal.taskBlocks[currentIndex - 1];
+      if (previousTask && previousTask.locked) {
+        // Update the previous task to unlock it
         updateTaskBlockMutation.mutate(
-          { goalId: goal.id, taskBlockId: nextTask.id, updates: { locked: false } },
+          { goalId: goal.id, taskBlockId: previousTask.id, updates: { locked: false } },
           {
             onSuccess: () => {
-              // After unlocking next task, update the current task
+              // After unlocking previous task, update the current task
               updateTaskBlockMutation.mutate(
                 { goalId: goal.id, taskBlockId: taskId, updates: updatedTask },
                 {
@@ -148,17 +172,17 @@ const GoalDetailPage: React.FC = () => {
 
     const updatedSubtask = { ...subtask, completed: !subtask.completed };
     
-    // If step-by-step mode is enabled and subtask is being completed, unlock next subtask
+    // If step-by-step mode is enabled and subtask is being completed, unlock previous subtask
     if (goal.stepByStep && updatedSubtask.completed) {
       const currentIndex = task.subtasks.findIndex(s => s.id === subtaskId);
-      const nextSubtask = task.subtasks[currentIndex + 1];
-      if (nextSubtask && nextSubtask.locked) {
-        // Update the next subtask to unlock it
+      const previousSubtask = task.subtasks[currentIndex - 1];
+      if (previousSubtask && previousSubtask.locked) {
+        // Update the previous subtask to unlock it
         updateSubtaskMutation.mutate(
-          { goalId: goal.id, taskBlockId: taskId, subtaskId: nextSubtask.id, updates: { locked: false } },
+          { goalId: goal.id, taskBlockId: taskId, subtaskId: previousSubtask.id, updates: { locked: false } },
           {
             onSuccess: () => {
-              // After unlocking next subtask, update the current subtask
+              // After unlocking previous subtask, update the current subtask
               updateSubtaskMutation.mutate(
                 { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
                 {
@@ -361,35 +385,38 @@ const GoalDetailPage: React.FC = () => {
             </div>
           )}
 
-          <div className="tasks-list">
-            {goal.taskBlocks.length === 0 ? (
-              <div className="empty-state">
-                <p>No tasks yet. Add your first task to get started!</p>
-              </div>
-            ) : (
-              goal.taskBlocks.map((task) => (
-                <TaskBlockComponent
-                  key={task.id}
-                  id={task.id}
-                  title={task.title}
-                  type={task.type}
-                  completed={task.completed}
-                  locked={task.locked}
-                  isRewardTrigger={task.isRewardTrigger}
-                  rewardNote={task.rewardNote}
-                  subtasks={task.subtasks}
-                  order={task.order}
-                  stepByStepMode={goal.stepByStep}
-                  onToggle={toggleTask}
-                  onSubtaskToggle={toggleSubtask}
-                  onDelete={deleteTask}
-                  onEdit={editTask}
-                  onSubtaskEdit={editSubtask}
-                  onSubtaskDelete={deleteSubtask}
-                />
-              ))
-            )}
-          </div>
+                     <div className="tasks-list">
+             {goal.taskBlocks.length === 0 ? (
+               <div className="empty-state">
+                 <p>No tasks yet. Add your first task to get started!</p>
+               </div>
+             ) : (
+               goal.taskBlocks
+                 .slice()
+                 .reverse()
+                 .map((task) => (
+                   <TaskBlockComponent
+                     key={task.id}
+                     id={task.id}
+                     title={task.title}
+                     type={task.type}
+                     completed={task.completed}
+                     locked={task.locked}
+                     isRewardTrigger={task.isRewardTrigger}
+                     rewardNote={task.rewardNote}
+                     subtasks={task.subtasks}
+                     order={task.order}
+                     stepByStepMode={goal.stepByStep}
+                     onToggle={toggleTask}
+                     onSubtaskToggle={toggleSubtask}
+                     onDelete={deleteTask}
+                     onEdit={editTask}
+                     onSubtaskEdit={editSubtask}
+                     onSubtaskDelete={deleteSubtask}
+                   />
+                 ))
+             )}
+           </div>
         </div>
       </div>
     </div>

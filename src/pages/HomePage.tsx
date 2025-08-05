@@ -32,8 +32,8 @@ const HomePage: React.FC = () => {
             <Link to="/dashboard" className="btn btn--primary">
               Get Started
             </Link>
-            <Link to="/demo" className="btn btn--secondary">
-              Watch Demo
+            <Link to="/daily-tasks" className="btn btn--secondary">
+              Daily Tasks
             </Link>
           </div>
           
@@ -73,6 +73,11 @@ const HomePage: React.FC = () => {
               <div className="feature-icon">📱</div>
               <h3>Offline Support</h3>
               <p>Work offline and sync when you're back online</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📅</div>
+              <h3>Daily Routines</h3>
+              <p>Build habits with daily and weekly recurring tasks</p>
             </div>
           </div>
         </section>

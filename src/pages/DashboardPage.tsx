@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGoals } from '@/hooks/useGoals';
 import { Goal } from '@/types';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
+import DailyTasksPage from './DailyTasksPage';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -22,6 +23,7 @@ import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
   };
 
 const DashboardPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'goals' | 'daily' | 'weekly'>('goals');
   const { data: goals = [], isLoading, error } = useGoals();
 
   const getTotalProgress = () => {
@@ -109,16 +111,44 @@ const DashboardPage: React.FC = () => {
         </div>
 
         <div className="dashboard-content">
-          <div className="goals-section">
-            <div className="goals-header">
-              <div className="goals-title">
-                <h2>Your Goals</h2>
-                <span className="goals-count">{goals.length} goal{goals.length !== 1 ? 's' : ''}</span>
+          {/* Tab Navigation */}
+          <div className="tab-navigation">
+            <button 
+              className={`tab-button ${activeTab === 'goals' ? 'active' : ''}`}
+              onClick={() => setActiveTab('goals')}
+            >
+              <span className="tab-icon">🎯</span>
+              Your Goals
+              <span className="tab-count">{goals.length}</span>
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'daily' ? 'active' : ''}`}
+              onClick={() => setActiveTab('daily')}
+            >
+              <span className="tab-icon">📅</span>
+              Daily Tasks
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
+              onClick={() => setActiveTab('weekly')}
+            >
+              <span className="tab-icon">📊</span>
+              Weekly Tasks
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'goals' && (
+            <div className="goals-section">
+              <div className="goals-header">
+                <div className="goals-title">
+                  <h2>Your Goals</h2>
+                  <span className="goals-count">{goals.length} goal{goals.length !== 1 ? 's' : ''}</span>
+                </div>
+                <Link to="/create" className="btn btn--primary">
+                  + Create New Goal
+                </Link>
               </div>
-              <Link to="/create" className="btn btn--primary">
-                + Create New Goal
-              </Link>
-            </div>
             
             {goals.length === 0 ? (
               <div className="empty-state">
@@ -184,6 +214,23 @@ const DashboardPage: React.FC = () => {
               </div>
             )}
           </div>
+          )}
+
+          {activeTab === 'daily' && (
+            <div className="daily-tasks-section">
+              <DailyTasksPage />
+            </div>
+          )}
+
+          {activeTab === 'weekly' && (
+            <div className="weekly-tasks-section">
+              <div className="empty-state">
+                <div className="empty-icon">📊</div>
+                <h3>Weekly Tasks Coming Soon</h3>
+                <p>Weekly task management will be available in the next update!</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

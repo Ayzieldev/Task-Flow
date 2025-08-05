@@ -13,6 +13,7 @@ import HomePage from '@/pages/HomePage';
 import DashboardPage from '@/pages/DashboardPage';
 import GoalDetailPage from '@/pages/GoalDetailPage';
 import GoalCreationPage from '@/pages/GoalCreationPage';
+import DailyTasksPage from '@/pages/DailyTasksPage';
 
 const App: React.FC = () => {
   return (
@@ -27,6 +28,7 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/goal/:id" element={<GoalDetailPage />} />
                 <Route path="/create" element={<GoalCreationPage />} />
+                <Route path="/daily-tasks" element={<DailyTasksPage />} />
               </Routes>
             </main>
             <Footer />
