@@ -1,44 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import TaskBlock from '../components/design/TaskBlock/TaskBlock';
+import TaskBlockComponent from '../components/design/TaskBlock/TaskBlock';
 import TaskForm from '../components/design/TaskForm/TaskForm';
-
-interface Subtask {
-  id: string;
-  title: string;
-  completed: boolean;
-  isRewardTrigger?: boolean;
-  rewardNote?: string;
-  locked?: boolean;
-  order: number;
-}
-
-interface TaskBlock {
-  id: string;
-  title: string;
-  type: 'single' | 'grouped';
-  completed: boolean;
-  locked?: boolean;
-  isRewardTrigger?: boolean;
-  rewardNote?: string;
-  subtasks?: Subtask[];
-  order: number;
-}
-
-interface Goal {
-  id: string;
-  title: string;
-  description?: string;
-  deadline?: string;
-  priority: 'low' | 'medium' | 'high';
-  reward?: string;
-  stepByStep: boolean;
-  completed: boolean;
-  progress: number;
-  taskBlocks: TaskBlock[];
-  createdAt: string;
-  updatedAt: string;
-}
+import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
+import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
+import { useGoal, useUpdateGoal, useAddTaskBlock, useUpdateTaskBlock, useDeleteTaskBlock, useAddSubtask, useUpdateSubtask, useDeleteSubtask, useUpdateGoalProgress } from '@/hooks/useGoals';
+import { Goal, TaskBlock, Subtask } from '@/types';
 
 interface TaskFormData {
   title: string;
@@ -51,20 +18,25 @@ interface TaskFormData {
 const GoalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [goal, setGoal] = useState<Goal | null>(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-      const foundGoal = goals.find((g: Goal) => g.id === id);
-      if (foundGoal) {
-        setGoal(foundGoal);
-      } else {
-        navigate('/');
-      }
+  // React Query hooks
+  const { data: goal, isLoading, error } = useGoal(id!);
+  const updateGoalMutation = useUpdateGoal();
+  const addTaskBlockMutation = useAddTaskBlock();
+  const updateTaskBlockMutation = useUpdateTaskBlock();
+  const deleteTaskBlockMutation = useDeleteTaskBlock();
+  const addSubtaskMutation = useAddSubtask();
+  const updateSubtaskMutation = useUpdateSubtask();
+  const deleteSubtaskMutation = useDeleteSubtask();
+  const updateGoalProgressMutation = useUpdateGoalProgress();
+
+  // Redirect if goal not found
+  React.useEffect(() => {
+    if (error && !isLoading) {
+      navigate('/');
     }
-  }, [id, navigate]);
+  }, [error, isLoading, navigate]);
 
   const calculateProgress = (taskBlocks: TaskBlock[]): number => {
     if (taskBlocks.length === 0) return 0;
@@ -79,8 +51,8 @@ const GoalDetailPage: React.FC = () => {
       } else if (task.type === 'grouped') {
         const subtasks = task.subtasks || [];
         if (subtasks.length > 0) {
-          totalTasks += subtasks.length;
-          completedTasks += subtasks.filter(subtask => subtask.completed).length;
+                  totalTasks += subtasks.length;
+        completedTasks += subtasks.filter((subtask: Subtask) => subtask.completed).length;
         }
       }
     });
@@ -88,20 +60,10 @@ const GoalDetailPage: React.FC = () => {
     return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   };
 
-  const updateGoal = (updatedGoal: Goal) => {
-    const goals = JSON.parse(localStorage.getItem('goals') || '[]');
-    const updatedGoals = goals.map((g: Goal) => 
-      g.id === updatedGoal.id ? updatedGoal : g
-    );
-    localStorage.setItem('goals', JSON.stringify(updatedGoals));
-    setGoal(updatedGoal);
-  };
-
   const addTask = (taskData: TaskFormData) => {
     if (!goal) return;
 
-    const newTask: TaskBlock = {
-      id: Date.now().toString(),
+    const newTaskBlock: Omit<TaskBlock, 'id'> = {
       title: taskData.title,
       type: taskData.type,
       completed: false,
@@ -120,179 +82,158 @@ const GoalDetailPage: React.FC = () => {
       })) : undefined,
     };
 
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: [...goal.taskBlocks, newTask],
-      progress: calculateProgress([...goal.taskBlocks, newTask]),
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
-    setShowTaskForm(false);
+    addTaskBlockMutation.mutate(
+      { goalId: goal.id, taskBlock: newTaskBlock },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+          setShowTaskForm(false);
+        },
+      }
+    );
   };
 
   const toggleTask = (taskId: string) => {
     if (!goal) return;
 
-    const updatedTaskBlocks = goal.taskBlocks.map(task => {
-      if (task.id === taskId) {
-        const updatedTask = { ...task, completed: !task.completed };
-        
-        // If step-by-step mode is enabled, unlock next task
-        if (goal.stepByStep && updatedTask.completed) {
-          const currentIndex = goal.taskBlocks.findIndex(t => t.id === taskId);
-          const nextTask = goal.taskBlocks[currentIndex + 1];
-          if (nextTask && nextTask.locked) {
-            nextTask.locked = false;
+    const task = goal.taskBlocks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const updatedTask = { ...task, completed: !task.completed };
+    
+    // If step-by-step mode is enabled and task is being completed, unlock next task
+    if (goal.stepByStep && updatedTask.completed) {
+      const currentIndex = goal.taskBlocks.findIndex(t => t.id === taskId);
+      const nextTask = goal.taskBlocks[currentIndex + 1];
+      if (nextTask && nextTask.locked) {
+        // Update the next task to unlock it
+        updateTaskBlockMutation.mutate(
+          { goalId: goal.id, taskBlockId: nextTask.id, updates: { locked: false } },
+          {
+            onSuccess: () => {
+              // After unlocking next task, update the current task
+              updateTaskBlockMutation.mutate(
+                { goalId: goal.id, taskBlockId: taskId, updates: updatedTask },
+                {
+                  onSuccess: () => {
+                    updateGoalProgressMutation.mutate(goal.id);
+                  },
+                }
+              );
+            },
           }
-        }
-        
-        return updatedTask;
+        );
+        return; // Exit early to avoid double mutation
       }
-      return task;
-    });
+    }
 
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: updatedTaskBlocks,
-      progress: calculateProgress(updatedTaskBlocks),
-      completed: updatedTaskBlocks.every(task => task.completed),
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
+    updateTaskBlockMutation.mutate(
+      { goalId: goal.id, taskBlockId: taskId, updates: updatedTask },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+        },
+      }
+    );
   };
 
   const toggleSubtask = (taskId: string, subtaskId: string) => {
     if (!goal) return;
 
-    const updatedTaskBlocks = goal.taskBlocks.map(task => {
-      if (task.id === taskId && task.subtasks) {
-        const updatedSubtasks = task.subtasks.map(subtask => {
-          if (subtask.id === subtaskId) {
-            const updatedSubtask = { ...subtask, completed: !subtask.completed };
-            
-            // If step-by-step mode is enabled, unlock next subtask
-            if (goal.stepByStep && updatedSubtask.completed && task.subtasks) {
-              const currentIndex = task.subtasks.findIndex(s => s.id === subtaskId);
-              const nextSubtask = task.subtasks[currentIndex + 1];
-              if (nextSubtask && nextSubtask.locked) {
-                nextSubtask.locked = false;
-              }
-            }
-            
-            return updatedSubtask;
+    const task = goal.taskBlocks.find(t => t.id === taskId);
+    if (!task || !task.subtasks) return;
+
+    const subtask = task.subtasks.find(s => s.id === subtaskId);
+    if (!subtask) return;
+
+    const updatedSubtask = { ...subtask, completed: !subtask.completed };
+    
+    // If step-by-step mode is enabled and subtask is being completed, unlock next subtask
+    if (goal.stepByStep && updatedSubtask.completed) {
+      const currentIndex = task.subtasks.findIndex(s => s.id === subtaskId);
+      const nextSubtask = task.subtasks[currentIndex + 1];
+      if (nextSubtask && nextSubtask.locked) {
+        // Update the next subtask to unlock it
+        updateSubtaskMutation.mutate(
+          { goalId: goal.id, taskBlockId: taskId, subtaskId: nextSubtask.id, updates: { locked: false } },
+          {
+            onSuccess: () => {
+              // After unlocking next subtask, update the current subtask
+              updateSubtaskMutation.mutate(
+                { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
+                {
+                  onSuccess: () => {
+                    updateGoalProgressMutation.mutate(goal.id);
+                  },
+                }
+              );
+            },
           }
-          return subtask;
-        });
-
-        // Check if all subtasks are completed
-        const allSubtasksCompleted = updatedSubtasks.every(subtask => subtask.completed);
-        
-        return {
-          ...task,
-          subtasks: updatedSubtasks,
-          completed: allSubtasksCompleted,
-        };
+        );
+        return; // Exit early to avoid double mutation
       }
-      return task;
-    });
+    }
 
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: updatedTaskBlocks,
-      progress: calculateProgress(updatedTaskBlocks),
-      completed: updatedTaskBlocks.every(task => task.completed),
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
+    updateSubtaskMutation.mutate(
+      { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+        },
+      }
+    );
   };
 
   const deleteTask = (taskId: string) => {
     if (!goal) return;
 
-    const updatedTaskBlocks = goal.taskBlocks
-      .filter(task => task.id !== taskId)
-      .map((task, index) => ({ ...task, order: index }));
-
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: updatedTaskBlocks,
-      progress: calculateProgress(updatedTaskBlocks),
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
+    deleteTaskBlockMutation.mutate(
+      { goalId: goal.id, taskBlockId: taskId },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+        },
+      }
+    );
   };
 
   const editTask = (taskId: string, newTitle: string) => {
     if (!goal) return;
 
-    const updatedTaskBlocks = goal.taskBlocks.map(task =>
-      task.id === taskId ? { ...task, title: newTitle } : task
+    updateTaskBlockMutation.mutate(
+      { goalId: goal.id, taskBlockId: taskId, updates: { title: newTitle } },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+        },
+      }
     );
-
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: updatedTaskBlocks,
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
   };
 
   const editSubtask = (taskId: string, subtaskId: string, newTitle: string) => {
     if (!goal) return;
 
-    const updatedTaskBlocks = goal.taskBlocks.map(task => {
-      if (task.id === taskId && task.subtasks) {
-        const updatedSubtasks = task.subtasks.map(subtask =>
-          subtask.id === subtaskId ? { ...subtask, title: newTitle } : subtask
-        );
-        return { ...task, subtasks: updatedSubtasks };
+    updateSubtaskMutation.mutate(
+      { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: { title: newTitle } },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+        },
       }
-      return task;
-    });
-
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: updatedTaskBlocks,
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
+    );
   };
 
   const deleteSubtask = (taskId: string, subtaskId: string) => {
     if (!goal) return;
 
-    const updatedTaskBlocks = goal.taskBlocks.map(task => {
-      if (task.id === taskId && task.subtasks) {
-        const updatedSubtasks = task.subtasks
-          .filter(subtask => subtask.id !== subtaskId)
-          .map((subtask, index) => ({ ...subtask, order: index }));
-        
-        // Check if all remaining subtasks are completed
-        const allSubtasksCompleted = updatedSubtasks.every(subtask => subtask.completed);
-        
-        return {
-          ...task,
-          subtasks: updatedSubtasks,
-          completed: allSubtasksCompleted,
-        };
+    deleteSubtaskMutation.mutate(
+      { goalId: goal.id, taskBlockId: taskId, subtaskId },
+      {
+        onSuccess: () => {
+          updateGoalProgressMutation.mutate(goal.id);
+        },
       }
-      return task;
-    });
-
-    const updatedGoal = {
-      ...goal,
-      taskBlocks: updatedTaskBlocks,
-      progress: calculateProgress(updatedTaskBlocks),
-      updatedAt: new Date().toISOString(),
-    };
-
-    updateGoal(updatedGoal);
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -314,11 +255,27 @@ const GoalDetailPage: React.FC = () => {
     }
   };
 
-  if (!goal) {
+  if (isLoading) {
     return (
       <div className="goal-detail-page">
         <div className="container">
-          <div className="loading">Loading...</div>
+          <div className="loading">
+            <LoadingSpinner size="lg" />
+            <p>Loading goal...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !goal) {
+    return (
+      <div className="goal-detail-page">
+        <div className="container">
+          <ErrorMessage 
+            message="Goal not found or error loading goal."
+            onRetry={() => window.location.reload()}
+          />
         </div>
       </div>
     );
@@ -411,7 +368,7 @@ const GoalDetailPage: React.FC = () => {
               </div>
             ) : (
               goal.taskBlocks.map((task) => (
-                <TaskBlock
+                <TaskBlockComponent
                   key={task.id}
                   id={task.id}
                   title={task.title}

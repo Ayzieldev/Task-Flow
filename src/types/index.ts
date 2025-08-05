@@ -3,16 +3,16 @@ export interface Goal {
   id: string;
   title: string;
   description?: string;
-  deadline?: Date;
+  deadline?: string;
   priority: 'low' | 'medium' | 'high';
   reward?: string;
   stepByStep: boolean;
   completed: boolean;
   progress: number;
   taskBlocks: TaskBlock[];
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string;
 }
 
 // Task Block Types
@@ -45,8 +45,8 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Theme Types
@@ -78,7 +78,7 @@ export interface PaginatedResponse<T> {
 export interface GoalFormData {
   title: string;
   description?: string;
-  deadline?: Date;
+  deadline?: string;
   priority: Priority;
   reward?: string;
   stepByStep: boolean;

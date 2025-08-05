@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { QueryClientProviderWrapper } from '@/context/QueryClient';
 import './styles/main.scss';
 
 // Components
@@ -15,22 +16,24 @@ import GoalCreationPage from '@/pages/GoalCreationPage';
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <Router>
-        <div className="app">
-          <Header />
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/goal/:id" element={<GoalDetailPage />} />
-              <Route path="/create" element={<GoalCreationPage />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
-    </ThemeProvider>
+    <QueryClientProviderWrapper>
+      <ThemeProvider>
+        <Router>
+          <div className="app">
+            <Header />
+            <main className="main-content">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/goal/:id" element={<GoalDetailPage />} />
+                <Route path="/create" element={<GoalCreationPage />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </Router>
+      </ThemeProvider>
+    </QueryClientProviderWrapper>
   );
 };
 

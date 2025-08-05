@@ -1,30 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-
-interface Goal {
-  id: string;
-  title: string;
-  description?: string;
-  deadline?: string;
-  priority: 'low' | 'medium' | 'high';
-  reward?: string;
-  stepByStep: boolean;
-  completed: boolean;
-  progress: number;
-  taskBlocks: any[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-const DashboardPage: React.FC = () => {
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const savedGoals = JSON.parse(localStorage.getItem('goals') || '[]');
-    setGoals(savedGoals);
-    setLoading(false);
-  }, []);
+import { useGoals } from '@/hooks/useGoals';
+import { Goal } from '@/types';
+import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
+import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -42,6 +21,9 @@ const DashboardPage: React.FC = () => {
     });
   };
 
+const DashboardPage: React.FC = () => {
+  const { data: goals = [], isLoading, error } = useGoals();
+
   const getTotalProgress = () => {
     if (goals.length === 0) return 0;
     const totalProgress = goals.reduce((sum, goal) => sum + goal.progress, 0);
@@ -56,11 +38,27 @@ const DashboardPage: React.FC = () => {
     return goals.reduce((sum, goal) => sum + goal.taskBlocks.length, 0);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="dashboard-page">
         <div className="container">
-          <div className="loading">Loading your goals...</div>
+          <div className="loading">
+            <LoadingSpinner size="lg" />
+            <p>Loading your goals...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-page">
+        <div className="container">
+          <ErrorMessage 
+            message="Error loading goals. Please try again."
+            onRetry={() => window.location.reload()}
+          />
         </div>
       </div>
     );
