@@ -1,65 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
-import { useDailyTasks, useCreateDailyTask, useToggleDailyTask, useDeleteDailyTask, useTaskStatistics } from '@/hooks/useTasks';
+import { useDailyTasks, useToggleDailyTask, useDeleteDailyTask, useTaskStatistics } from '@/hooks/useTasks';
 import { DailyTask } from '@/types';
-
-interface TaskFormData {
-  title: string;
-  description?: string;
-  isRewardTrigger?: boolean;
-  rewardNote?: string;
-  scheduledTime?: string;
-}
 
 const DailyTasksPage: React.FC = () => {
   const navigate = useNavigate();
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [newTask, setNewTask] = useState<TaskFormData>({
-    title: '',
-    description: '',
-    isRewardTrigger: false,
-    rewardNote: '',
-    scheduledTime: '',
-  });
 
   // React Query hooks
   const { data: dailyTasks, isLoading, error } = useDailyTasks();
   const { data: statistics } = useTaskStatistics();
-  const createDailyTaskMutation = useCreateDailyTask();
   const toggleDailyTaskMutation = useToggleDailyTask();
   const deleteDailyTaskMutation = useDeleteDailyTask();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTask.title.trim()) return;
-
-    createDailyTaskMutation.mutate(
-      {
-        title: newTask.title,
-        description: newTask.description,
-        completed: false,
-        streak: 0,
-        isRewardTrigger: newTask.isRewardTrigger,
-        rewardNote: newTask.rewardNote,
-        scheduledTime: newTask.scheduledTime || undefined,
-        order: dailyTasks?.length || 0,
-      },
-      {
-        onSuccess: () => {
-          setNewTask({
-            title: '',
-            description: '',
-            isRewardTrigger: false,
-            rewardNote: '',
-            scheduledTime: '',
-          });
-          setShowTaskForm(false);
-        },
-      }
-    );
-  };
 
   const handleToggleTask = (taskId: string) => {
     toggleDailyTaskMutation.mutate(taskId);
@@ -146,89 +99,11 @@ const DailyTasksPage: React.FC = () => {
             <h2>Today's Tasks</h2>
             <button 
               className="btn btn--primary"
-              onClick={() => setShowTaskForm(!showTaskForm)}
+              onClick={() => navigate('/create-task?type=daily')}
             >
-              {showTaskForm ? 'Cancel' : '+ Add Task'}
+              + Add Task
             </button>
           </div>
-
-          {showTaskForm && (
-            <div className="task-form-container">
-              <form onSubmit={handleSubmit} className="task-form">
-                <div className="form-group">
-                  <label htmlFor="taskTitle">Task Title</label>
-                  <input
-                    type="text"
-                    id="taskTitle"
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                    placeholder="e.g., Drink 8 glasses of water"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="taskDescription">Description (Optional)</label>
-                  <textarea
-                    id="taskDescription"
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                    placeholder="Add more details about this task..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="taskTime">Scheduled Time (Optional)</label>
-                  <input
-                    type="time"
-                    id="taskTime"
-                    value={newTask.scheduledTime}
-                    onChange={(e) => setNewTask({ ...newTask, scheduledTime: e.target.value })}
-                    placeholder="When do you want to complete this task?"
-                  />
-                </div>
-
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={newTask.isRewardTrigger}
-                      onChange={(e) => setNewTask({ ...newTask, isRewardTrigger: e.target.checked })}
-                    />
-                    <span className="checkmark"></span>
-                    This is a reward trigger
-                  </label>
-                </div>
-
-                {newTask.isRewardTrigger && (
-                  <div className="form-group">
-                    <label htmlFor="rewardNote">Reward Note</label>
-                    <input
-                      type="text"
-                      id="rewardNote"
-                      value={newTask.rewardNote}
-                      onChange={(e) => setNewTask({ ...newTask, rewardNote: e.target.value })}
-                      placeholder="e.g., Treat yourself to a coffee!"
-                    />
-                  </div>
-                )}
-
-                <div className="form-actions">
-                  <button type="submit" className="btn btn--primary" disabled={createDailyTaskMutation.isPending}>
-                    {createDailyTaskMutation.isPending ? 'Adding...' : 'Add Task'}
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn--secondary"
-                    onClick={() => setShowTaskForm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
 
           <div className="tasks-list">
             {dailyTasks?.length === 0 ? (
@@ -238,7 +113,7 @@ const DailyTasksPage: React.FC = () => {
                 <p>Start building your daily routine by adding your first task!</p>
                 <button 
                   className="btn btn--primary"
-                  onClick={() => setShowTaskForm(true)}
+                  onClick={() => navigate('/create-task?type=daily')}
                 >
                   Add Your First Task
                 </button>

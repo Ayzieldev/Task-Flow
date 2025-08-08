@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useReward } from '@/context/RewardContext';
 import TaskBlockComponent from '../components/design/TaskBlock/TaskBlock';
 import TaskForm from '../components/design/TaskForm/TaskForm';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
@@ -19,6 +20,7 @@ const GoalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const { triggerGoalReward } = useReward();
 
   // React Query hooks
   const { data: goal, isLoading, error } = useGoal(id!);
@@ -37,6 +39,17 @@ const GoalDetailPage: React.FC = () => {
       navigate('/');
     }
   }, [error, isLoading, navigate]);
+
+  // Check for goal completion and trigger reward
+  useEffect(() => {
+    if (goal && !goal.completed) {
+      const progress = calculateProgress(goal.taskBlocks);
+      if (progress === 100) {
+        // Goal is completed! Trigger reward
+        triggerGoalReward(goal.reward);
+      }
+    }
+  }, [goal, triggerGoalReward]);
 
   const calculateProgress = (taskBlocks: TaskBlock[]): number => {
     if (taskBlocks.length === 0) return 0;
@@ -156,6 +169,18 @@ const GoalDetailPage: React.FC = () => {
       {
         onSuccess: () => {
           updateGoalProgressMutation.mutate(goal.id);
+          
+          // Check if goal is completed after task update
+          const updatedGoal = {
+            ...goal,
+            taskBlocks: goal.taskBlocks.map(t => 
+              t.id === taskId ? updatedTask : t
+            )
+          };
+          const newProgress = calculateProgress(updatedGoal.taskBlocks);
+          if (newProgress === 100 && !goal.completed) {
+            triggerGoalReward(goal.reward);
+          }
         },
       }
     );
@@ -183,14 +208,31 @@ const GoalDetailPage: React.FC = () => {
           {
             onSuccess: () => {
               // After unlocking previous subtask, update the current subtask
-              updateSubtaskMutation.mutate(
-                { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
-                {
-                  onSuccess: () => {
-                    updateGoalProgressMutation.mutate(goal.id);
-                  },
-                }
-              );
+                                   updateSubtaskMutation.mutate(
+                   { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
+                   {
+                     onSuccess: () => {
+                       updateGoalProgressMutation.mutate(goal.id);
+                       
+                       // Check if goal is completed after subtask update
+                       const updatedGoal = {
+                         ...goal,
+                         taskBlocks: goal.taskBlocks.map(t => 
+                           t.id === taskId ? {
+                             ...t,
+                             subtasks: t.subtasks?.map(s => 
+                               s.id === subtaskId ? updatedSubtask : s
+                             )
+                           } : t
+                         )
+                       };
+                       const newProgress = calculateProgress(updatedGoal.taskBlocks);
+                       if (newProgress === 100 && !goal.completed) {
+                         triggerGoalReward(goal.reward);
+                       }
+                     },
+                   }
+                 );
             },
           }
         );
@@ -203,6 +245,23 @@ const GoalDetailPage: React.FC = () => {
       {
         onSuccess: () => {
           updateGoalProgressMutation.mutate(goal.id);
+          
+          // Check if goal is completed after subtask update
+          const updatedGoal = {
+            ...goal,
+            taskBlocks: goal.taskBlocks.map(t => 
+              t.id === taskId ? {
+                ...t,
+                subtasks: t.subtasks?.map(s => 
+                  s.id === subtaskId ? updatedSubtask : s
+                )
+              } : t
+            )
+          };
+          const newProgress = calculateProgress(updatedGoal.taskBlocks);
+          if (newProgress === 100 && !goal.completed) {
+            triggerGoalReward(goal.reward);
+          }
         },
       }
     );

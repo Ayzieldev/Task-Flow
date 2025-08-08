@@ -1,36 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
-import Modal from '@/components/design/Modal/Modal';
-import { useWeeklyTasks, useCreateWeeklyTask, useToggleWeeklyTask, useDeleteWeeklyTask } from '@/hooks/useTasks';
+import { useWeeklyTasks, useToggleWeeklyTask, useDeleteWeeklyTask } from '@/hooks/useTasks';
 import { WeeklyTask } from '@/types';
-
-interface TaskFormData {
-  title: string;
-  description?: string;
-  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
-  isRewardTrigger?: boolean;
-  rewardNote?: string;
-  scheduledTime?: string;
-}
 
 const DayTasksPage: React.FC = () => {
   const navigate = useNavigate();
   const { day } = useParams<{ day: string }>();
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [newTask, setNewTask] = useState<TaskFormData>({
-    title: '',
-    description: '',
-    dayOfWeek: (day as any) || 'monday',
-    isRewardTrigger: false,
-    rewardNote: '',
-    scheduledTime: '',
-  });
 
   // React Query hooks
   const { data: weeklyTasks, isLoading, error } = useWeeklyTasks();
-  const createWeeklyTaskMutation = useCreateWeeklyTask();
   const toggleWeeklyTaskMutation = useToggleWeeklyTask();
   const deleteWeeklyTaskMutation = useDeleteWeeklyTask();
 
@@ -59,37 +39,7 @@ const DayTasksPage: React.FC = () => {
     return '';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTask.title.trim()) return;
 
-    createWeeklyTaskMutation.mutate(
-      {
-        title: newTask.title,
-        description: newTask.description,
-        dayOfWeek: newTask.dayOfWeek,
-        completed: false,
-        streak: 0,
-        isRewardTrigger: newTask.isRewardTrigger,
-        rewardNote: newTask.rewardNote,
-        scheduledTime: newTask.scheduledTime || undefined,
-        order: (weeklyTasks || []).length,
-      },
-      {
-        onSuccess: () => {
-          setNewTask({
-            title: '',
-            description: '',
-            dayOfWeek: (day as any) || 'monday',
-            isRewardTrigger: false,
-            rewardNote: '',
-            scheduledTime: '',
-          });
-          setShowTaskForm(false);
-        },
-      }
-    );
-  };
 
   const handleToggleTask = (taskId: string) => {
     toggleWeeklyTaskMutation.mutate(taskId);
@@ -202,7 +152,7 @@ const DayTasksPage: React.FC = () => {
             <div className="header-actions">
               <button 
                 className="btn btn--primary"
-                onClick={() => setShowTaskForm(true)}
+                onClick={() => navigate(`/create-task?type=weekly&day=${day}`)}
               >
                 + Add Task
               </button>
@@ -217,7 +167,7 @@ const DayTasksPage: React.FC = () => {
                 <p>Start your {formatDayName(day).toLowerCase()} by adding your first task!</p>
                 <button 
                   className="btn btn--primary"
-                  onClick={() => setShowTaskForm(true)}
+                  onClick={() => navigate(`/create-task?type=weekly&day=${day}`)}
                 >
                   Add Your First Task
                 </button>
@@ -269,125 +219,6 @@ const DayTasksPage: React.FC = () => {
             )}
           </div>
         </div>
-
-        <Modal
-          isOpen={showTaskForm}
-          onClose={() => setShowTaskForm(false)}
-          title={`Add New Task - ${formatDayName(day)}`}
-          size="md"
-        >
-          <form onSubmit={handleSubmit} className="task-form">
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="taskTitle">Task Title</label>
-                <input
-                  type="text"
-                  id="taskTitle"
-                  value={newTask.title}
-                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  placeholder="e.g., Team meeting preparation"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="taskDay">Day of Week</label>
-                <select
-                  id="taskDay"
-                  value={newTask.dayOfWeek}
-                  onChange={(e) => setNewTask({ ...newTask, dayOfWeek: e.target.value as any })}
-                  required
-                >
-                  <option value="monday">Monday</option>
-                  <option value="tuesday">Tuesday</option>
-                  <option value="wednesday">Wednesday</option>
-                  <option value="thursday">Thursday</option>
-                  <option value="friday">Friday</option>
-                  <option value="saturday">Saturday</option>
-                  <option value="sunday">Sunday</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="taskDescription">Description (Optional)</label>
-              <textarea
-                id="taskDescription"
-                value={newTask.description}
-                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                placeholder="Add more details about this task..."
-                rows={3}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="taskTime">Scheduled Time (Optional)</label>
-              <input
-                type="time"
-                id="taskTime"
-                value={newTask.scheduledTime}
-                onChange={(e) => setNewTask({ ...newTask, scheduledTime: e.target.value })}
-                placeholder="When do you want to complete this task?"
-              />
-            </div>
-
-            <div className="form-group checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={newTask.isRewardTrigger}
-                  onChange={(e) => setNewTask({ ...newTask, isRewardTrigger: e.target.checked })}
-                />
-                <span className="checkmark"></span>
-                This is a reward trigger
-              </label>
-            </div>
-
-            {newTask.isRewardTrigger && (
-              <div className="form-group">
-                <label htmlFor="rewardNote">Reward Note</label>
-                <input
-                  type="text"
-                  id="rewardNote"
-                  value={newTask.rewardNote}
-                  onChange={(e) => setNewTask({ ...newTask, rewardNote: e.target.value })}
-                  placeholder="e.g., Treat yourself to a movie!"
-                />
-              </div>
-            )}
-
-            <div className="form-actions">
-              <button type="submit" className="btn btn--primary" disabled={createWeeklyTaskMutation.isPending}>
-                {createWeeklyTaskMutation.isPending ? 'Adding...' : 'Add Task'}
-              </button>
-              <button 
-                type="button" 
-                className="btn btn--secondary"
-                onClick={() => {
-                  const currentDay = newTask.dayOfWeek;
-                  setNewTask({
-                    title: '',
-                    description: '',
-                    dayOfWeek: currentDay,
-                    isRewardTrigger: false,
-                    rewardNote: '',
-                    scheduledTime: '',
-                  });
-                }}
-                disabled={createWeeklyTaskMutation.isPending}
-              >
-                Add Another for {formatDayName(newTask.dayOfWeek)}
-              </button>
-              <button 
-                type="button" 
-                className="btn btn--tertiary"
-                onClick={() => setShowTaskForm(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </Modal>
       </div>
     </div>
   );

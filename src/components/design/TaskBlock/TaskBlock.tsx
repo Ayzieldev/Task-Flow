@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useReward } from '@/context/RewardContext';
 import './TaskBlock.scss';
 
 interface Subtask {
@@ -48,6 +49,7 @@ const TaskBlock: React.FC<TaskBlockProps> = ({
   onSubtaskEdit,
   onSubtaskDelete,
 }) => {
+  const { triggerTaskReward } = useReward();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
   const [isExpanded, setIsExpanded] = useState(type === 'grouped');
@@ -56,13 +58,26 @@ const TaskBlock: React.FC<TaskBlockProps> = ({
 
   const handleToggle = () => {
     if (!locked) {
+      const wasCompleted = completed;
       onToggle(id);
+      
+      // Trigger reward if task was just completed and has reward trigger
+      if (!wasCompleted && isRewardTrigger && rewardNote) {
+        triggerTaskReward(rewardNote);
+      }
     }
   };
 
   const handleSubtaskToggle = (subtaskId: string) => {
     if (!locked) {
+      const subtask = subtasks.find(s => s.id === subtaskId);
+      const wasCompleted = subtask?.completed || false;
       onSubtaskToggle(id, subtaskId);
+      
+      // Trigger reward if subtask was just completed and has reward trigger
+      if (!wasCompleted && subtask?.isRewardTrigger && subtask?.rewardNote) {
+        triggerTaskReward(subtask.rewardNote);
+      }
     }
   };
 

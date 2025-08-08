@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useReward } from '@/context/RewardContext';
 import { useGoals } from '@/hooks/useGoals';
 import { useWeeklyTasks } from '@/hooks/useTasks';
 import { Goal, WeeklyTask } from '@/types';
@@ -65,6 +66,7 @@ const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'goals' | 'daily' | 'weekly'>('goals');
   const { data: goals = [], isLoading, error } = useGoals();
   const { data: weeklyTasks } = useWeeklyTasks();
+  const { triggerTaskReward, triggerGoalReward, triggerStreakReward } = useReward();
 
   const getTotalProgress = () => {
     if (goals.length === 0) return 0;
@@ -147,6 +149,32 @@ const DashboardPage: React.FC = () => {
                 <span className="stat-label">Avg Progress</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Test Reward System Section - Remove in production */}
+        <div className="reward-test-section">
+          <h3>🎁 Test Reward System</h3>
+          <p>Click the buttons below to test different reward animations:</p>
+          <div className="reward-test-buttons">
+            <button 
+              className="btn btn--secondary"
+              onClick={() => triggerTaskReward("Great job completing this task! 🎉")}
+            >
+              Test Task Reward
+            </button>
+            <button 
+              className="btn btn--secondary"
+              onClick={() => triggerGoalReward("Congratulations! You've achieved your goal! 🎯")}
+            >
+              Test Goal Reward
+            </button>
+            <button 
+              className="btn btn--secondary"
+              onClick={() => triggerStreakReward(7)}
+            >
+              Test Streak Reward
+            </button>
           </div>
         </div>
 

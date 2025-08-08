@@ -114,16 +114,23 @@ export const useUpdateDailyTask = () => {
 
       return { previousTasks };
     },
+    onSuccess: (updatedTask) => {
+      // Update the cache with the server response
+      queryClient.setQueryData(taskKeys.daily(), (oldTasks: DailyTask[] | undefined) => {
+        if (!oldTasks) return oldTasks;
+        return oldTasks.map(task =>
+          task.id === updatedTask.id ? updatedTask : task
+        );
+      });
+
+      // Only invalidate statistics, not the main tasks list
+      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
+    },
     onError: (err, { id }, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.daily(), context.previousTasks);
       }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: taskKeys.daily() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
     },
   });
 };
@@ -152,17 +159,23 @@ export const useUpdateWeeklyTask = () => {
 
       return { previousTasks };
     },
+    onSuccess: (updatedTask) => {
+      // Update the cache with the server response
+      queryClient.setQueryData(taskKeys.weekly(), (oldTasks: WeeklyTask[] | undefined) => {
+        if (!oldTasks) return oldTasks;
+        return oldTasks.map(task =>
+          task.id === updatedTask.id ? updatedTask : task
+        );
+      });
+
+      // Only invalidate statistics, not the main tasks list
+      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
+    },
     onError: (err, { id }, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.weekly(), context.previousTasks);
       }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: taskKeys.weekly() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.todayWeekly() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
     },
   });
 };
@@ -187,16 +200,15 @@ export const useDeleteDailyTask = () => {
 
       return { previousTasks };
     },
+    onSuccess: () => {
+      // Only invalidate statistics, not the main tasks list
+      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
+    },
     onError: (err, id, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.daily(), context.previousTasks);
       }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: taskKeys.daily() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
     },
   });
 };
@@ -221,17 +233,15 @@ export const useDeleteWeeklyTask = () => {
 
       return { previousTasks };
     },
+    onSuccess: () => {
+      // Only invalidate statistics, not the main tasks list
+      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
+    },
     onError: (err, id, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.weekly(), context.previousTasks);
       }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: taskKeys.weekly() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.todayWeekly() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
     },
   });
 };
@@ -266,16 +276,23 @@ export const useToggleDailyTask = () => {
 
       return { previousTasks };
     },
+    onSuccess: (updatedTask) => {
+      // Update the cache with the server response
+      queryClient.setQueryData(taskKeys.daily(), (oldTasks: DailyTask[] | undefined) => {
+        if (!oldTasks) return oldTasks;
+        return oldTasks.map(task =>
+          task.id === updatedTask.id ? updatedTask : task
+        );
+      });
+
+      // Only invalidate statistics, not the main tasks list
+      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
+    },
     onError: (err, id, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.daily(), context.previousTasks);
       }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: taskKeys.daily() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
     },
   });
 };
@@ -289,11 +306,13 @@ export const useToggleWeeklyTask = () => {
     onMutate: async (id) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: taskKeys.weekly() });
+      await queryClient.cancelQueries({ queryKey: taskKeys.todayWeekly() });
 
       // Snapshot the previous value
       const previousTasks = queryClient.getQueryData(taskKeys.weekly());
+      const previousTodayTasks = queryClient.getQueryData(taskKeys.todayWeekly());
 
-      // Optimistically update the task
+      // Optimistically update the task in both weekly and today's tasks
       queryClient.setQueryData(taskKeys.weekly(), (oldTasks: WeeklyTask[] | undefined) => {
         if (!oldTasks) return oldTasks;
         return oldTasks.map(task =>
@@ -308,19 +327,49 @@ export const useToggleWeeklyTask = () => {
         );
       });
 
-      return { previousTasks };
+      queryClient.setQueryData(taskKeys.todayWeekly(), (oldTasks: WeeklyTask[] | undefined) => {
+        if (!oldTasks) return oldTasks;
+        return oldTasks.map(task =>
+          task.id === id 
+            ? { 
+                ...task, 
+                completed: !task.completed,
+                streak: !task.completed ? task.streak + 1 : Math.max(0, task.streak - 1),
+                updatedAt: new Date()
+              } 
+            : task
+        );
+      });
+
+      return { previousTasks, previousTodayTasks };
+    },
+    onSuccess: (updatedTask) => {
+      // Update the cache with the server response for both queries
+      queryClient.setQueryData(taskKeys.weekly(), (oldTasks: WeeklyTask[] | undefined) => {
+        if (!oldTasks) return oldTasks;
+        return oldTasks.map(task =>
+          task.id === updatedTask.id ? updatedTask : task
+        );
+      });
+
+      queryClient.setQueryData(taskKeys.todayWeekly(), (oldTasks: WeeklyTask[] | undefined) => {
+        if (!oldTasks) return oldTasks;
+        return oldTasks.map(task =>
+          task.id === updatedTask.id ? updatedTask : task
+        );
+      });
+
+      // Only invalidate statistics, not the main tasks list
+      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
     },
     onError: (err, id, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.weekly(), context.previousTasks);
       }
-    },
-    onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: taskKeys.weekly() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.todayWeekly() });
-      queryClient.invalidateQueries({ queryKey: taskKeys.statistics() });
+      if (context?.previousTodayTasks) {
+        queryClient.setQueryData(taskKeys.todayWeekly(), context.previousTodayTasks);
+      }
     },
   });
 }; 

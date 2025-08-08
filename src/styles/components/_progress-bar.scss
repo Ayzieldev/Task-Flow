@@ -59,4 +59,17 @@
   from {
     width: 0%;
   }
+}
+
+@keyframes progressGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--color-primary-rgb), 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(var(--color-primary-rgb), 0.6);
+  }
+}
+
+.progress-bar__fill--completed {
+  animation: progressGlow 2s ease-in-out infinite;
 } 

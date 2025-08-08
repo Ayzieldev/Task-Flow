@@ -95,51 +95,6 @@
     }
   }
 
-  // Test Reward System Section - Remove in production
-  .reward-test-section {
-    @include card-base;
-    margin-bottom: $spacing-2xl;
-    padding: $spacing-xl;
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 182, 193, 0.1));
-    border: 2px dashed var(--color-primary);
-    
-    h3 {
-      font-size: $font-size-xl;
-      font-weight: $font-weight-bold;
-      color: var(--color-text);
-      margin-bottom: $spacing-sm;
-      text-align: center;
-    }
-    
-    p {
-      color: var(--color-text-muted);
-      text-align: center;
-      margin-bottom: $spacing-lg;
-    }
-    
-    .reward-test-buttons {
-      display: flex;
-      gap: $spacing-md;
-      justify-content: center;
-      flex-wrap: wrap;
-      
-      @include mobile {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .btn {
-        min-width: 150px;
-        transition: all $transition-fast;
-        
-        &:hover {
-          transform: scale(1.05);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-      }
-    }
-  }
-
   .dashboard-content {
     .tab-navigation {
       display: flex;
@@ -196,72 +151,6 @@
       }
     }
 
-    .goals-section {
-      .goals-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: $spacing-xl;
-        flex-wrap: wrap;
-        gap: $spacing-md;
-
-        .goals-title {
-          display: flex;
-          align-items: center;
-          gap: $spacing-md;
-
-          h2 {
-            margin: 0;
-            font-size: $font-size-2xl;
-            color: var(--color-text);
-          }
-
-          .goals-count {
-            background: var(--color-primary);
-            color: white;
-            padding: $spacing-xs $spacing-sm;
-            border-radius: $border-radius-full;
-            font-size: $font-size-sm;
-            font-weight: $font-weight-bold;
-          }
-        }
-      }
-
-      .goals-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: $spacing-lg;
-
-        @include mobile {
-          grid-template-columns: 1fr;
-          gap: $spacing-md;
-        }
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: $spacing-xxl 0;
-
-        .empty-icon {
-          font-size: 4rem;
-          margin-bottom: $spacing-md;
-        }
-
-        h3 {
-          font-size: $font-size-xl;
-          font-weight: $font-weight-semibold;
-          color: var(--color-text);
-          margin-bottom: $spacing-sm;
-        }
-
-        p {
-          font-size: $font-size-base;
-          color: var(--color-text-muted);
-          margin-bottom: $spacing-lg;
-        }
-      }
-    }
-
     .daily-tasks-section,
     .weekly-tasks-section {
       .daily-tasks-page,
@@ -297,10 +186,307 @@
               font-size: $font-size-2xl;
               color: var(--color-text);
             }
+
+            .btn {
+              flex-shrink: 0;
+            }
+          }
+
+          .task-form-container {
+            @include card-base;
+            margin-bottom: $spacing-lg;
+          }
+
+          .tasks-list,
+          .weekly-tasks-grid {
+            .task-item,
+            .day-section {
+              @include card-base;
+              margin-bottom: $spacing-md;
+              transition: all $transition-normal;
+
+              &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+              }
+
+              &.completed {
+                opacity: 0.7;
+              }
+            }
+
+            .day-section {
+              .day-header {
+                background: var(--gradient-primary);
+                color: white;
+                padding: $spacing-md $spacing-lg;
+                border-radius: $border-radius-lg $border-radius-lg 0 0;
+                margin: -$spacing-lg -$spacing-lg $spacing-lg -$spacing-lg;
+
+                .day-title {
+                  font-size: $font-size-lg;
+                  font-weight: $font-weight-semibold;
+                  margin: 0;
+                }
+
+                .task-count {
+                  background: rgba(255, 255, 255, 0.2);
+                  padding: $spacing-xs $spacing-sm;
+                  border-radius: $border-radius-sm;
+                  font-size: $font-size-xs;
+                  font-weight: $font-weight-bold;
+                }
+              }
+
+              .day-tasks {
+                .task-item {
+                  margin-bottom: $spacing-sm;
+                  padding: $spacing-md;
+
+                  &:last-child {
+                    margin-bottom: 0;
+                  }
+                }
+              }
+            }
+
+            .empty-state {
+              @include card-base;
+              padding: $spacing-3xl;
+              text-align: center;
+              max-width: 500px;
+              margin: 0 auto;
+
+              .empty-icon {
+                font-size: $font-size-4xl;
+                margin-bottom: $spacing-lg;
+                display: block;
+              }
+
+              h3 {
+                font-size: $font-size-xl;
+                margin-bottom: $spacing-md;
+                color: var(--color-text);
+              }
+
+              p {
+                color: var(--color-text-muted);
+                font-size: $font-size-base;
+                line-height: 1.6;
+                margin-bottom: $spacing-xl;
+              }
+
+              .btn {
+                min-width: 200px;
+              }
+            }
           }
         }
       }
     }
+
+    .goals-section {
+      .goals-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-xl;
+        flex-wrap: wrap;
+        gap: $spacing-md;
+
+        .goals-title {
+          display: flex;
+          align-items: center;
+          gap: $spacing-md;
+
+          h2 {
+            margin: 0;
+            font-size: $font-size-2xl;
+            color: var(--color-text);
+          }
+
+          .goals-count {
+            background: var(--color-primary);
+            color: white;
+            padding: $spacing-xs $spacing-sm;
+            border-radius: $border-radius-full;
+            font-size: $font-size-xs;
+            font-weight: $font-weight-bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+
+        .btn {
+          flex-shrink: 0;
+        }
+      }
+
+      .empty-state {
+        @include card-base;
+        padding: $spacing-3xl;
+        text-align: center;
+        max-width: 500px;
+        margin: 0 auto;
+
+        .empty-icon {
+          font-size: $font-size-4xl;
+          margin-bottom: $spacing-lg;
+          display: block;
+        }
+
+        h3 {
+          font-size: $font-size-xl;
+          margin-bottom: $spacing-md;
+          color: var(--color-text);
+        }
+
+        p {
+          color: var(--color-text-muted);
+          font-size: $font-size-base;
+          line-height: 1.6;
+          margin-bottom: $spacing-xl;
+        }
+
+        .btn {
+          min-width: 200px;
+        }
+      }
+
+      .goals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: $spacing-lg;
+
+        @include mobile {
+          grid-template-columns: 1fr;
+        }
+
+        .goal-card {
+          @include card-base;
+          padding: $spacing-xl;
+          text-decoration: none;
+          color: inherit;
+          transition: all $transition-normal;
+          position: relative;
+
+
+          &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          }
+
+          &__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: $spacing-md;
+            gap: $spacing-md;
+
+            h3 {
+              margin: 0;
+              font-size: $font-size-lg;
+              font-weight: $font-weight-semibold;
+              color: var(--color-text);
+              line-height: 1.3;
+              flex: 1;
+            }
+          }
+
+          &__description {
+            color: var(--color-text-muted);
+            font-size: $font-size-sm;
+            line-height: 1.5;
+            margin-bottom: $spacing-lg;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          &__progress {
+            margin-bottom: $spacing-lg;
+
+            .progress-info {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: $spacing-sm;
+
+              .progress-text {
+                font-size: $font-size-sm;
+                color: var(--color-text-muted);
+                font-weight: $font-weight-medium;
+              }
+
+              .progress-percentage {
+                font-size: $font-size-sm;
+                font-weight: $font-weight-bold;
+                color: var(--color-primary);
+              }
+            }
+
+            .progress-bar {
+              width: 100%;
+              height: 6px;
+              background: var(--color-border);
+              border-radius: $border-radius-full;
+              overflow: hidden;
+
+              .progress-fill {
+                height: 100%;
+                background: var(--gradient-primary);
+                border-radius: $border-radius-full;
+                transition: width 0.5s ease-in-out;
+              }
+            }
+          }
+
+          &__meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: $spacing-sm;
+            margin-bottom: $spacing-md;
+
+            .meta-item {
+              display: flex;
+              flex-direction: column;
+              gap: $spacing-xs;
+
+              .meta-label {
+                font-size: $font-size-xs;
+                color: var(--color-text-muted);
+                font-weight: $font-weight-medium;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+
+              .meta-value {
+                font-size: $font-size-sm;
+                color: var(--color-text);
+                font-weight: $font-weight-medium;
+              }
+            }
+          }
+
+          &__completed {
+            position: absolute;
+            top: $spacing-xl;
+            right: 7rem;
+            background: var(--color-success);
+            color: white;
+            padding: $spacing-xs $spacing-sm;
+            border-radius: $border-radius-full;
+            font-size: $font-size-xs;
+            font-weight: $font-weight-bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+    }
+  }
+}
 
     .weekly-tasks-section {
       .weekly-tasks-grid {
@@ -548,6 +734,51 @@
           font-size: $font-size-base;
           color: var(--color-text-muted);
           margin-bottom: $spacing-lg;
+        }
+      }
+
+      // Test Reward System Section - Remove in production
+      .reward-test-section {
+        @include card-base;
+        margin-bottom: $spacing-2xl;
+        padding: $spacing-xl;
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 182, 193, 0.1));
+        border: 2px dashed var(--color-primary);
+        
+        h3 {
+          font-size: $font-size-xl;
+          font-weight: $font-weight-bold;
+          color: var(--color-text);
+          margin-bottom: $spacing-sm;
+          text-align: center;
+        }
+        
+        p {
+          color: var(--color-text-muted);
+          text-align: center;
+          margin-bottom: $spacing-lg;
+        }
+        
+        .reward-test-buttons {
+          display: flex;
+          gap: $spacing-md;
+          justify-content: center;
+          flex-wrap: wrap;
+          
+          @include mobile {
+            flex-direction: column;
+            align-items: center;
+          }
+          
+          .btn {
+            min-width: 150px;
+            transition: all $transition-fast;
+            
+            &:hover {
+              transform: scale(1.05);
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+          }
         }
       }
     }

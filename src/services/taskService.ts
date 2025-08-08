@@ -18,10 +18,14 @@ const getFromStorage = <T>(key: string): T[] => {
     }
     
     const stored = localStorage.getItem(key);
+    console.log('🔍 Reading from localStorage:', key, 'stored:', stored ? 'yes' : 'no');
+    
     if (!stored) return [];
     
     const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed : [];
+    const result = Array.isArray(parsed) ? parsed : [];
+    console.log('🔍 Parsed data from localStorage:', key, 'items:', result.length);
+    return result;
   } catch (error) {
     console.error(`Error reading ${key} from localStorage:`, error);
     return [];
@@ -37,7 +41,10 @@ const saveToStorage = <T>(key: string, data: T[]): void => {
       return;
     }
     
-    localStorage.setItem(key, JSON.stringify(data));
+    const jsonData = JSON.stringify(data);
+    console.log('🔍 Saving to localStorage:', key, 'data length:', data.length);
+    localStorage.setItem(key, jsonData);
+    console.log('✅ Saved to localStorage successfully');
   } catch (error) {
     console.error(`Error saving ${key} to localStorage:`, error);
   }
@@ -72,34 +79,37 @@ export const taskService = {
   // Get all daily tasks
   async getDailyTasks(): Promise<DailyTask[]> {
     await delay(200);
+    console.log('🔍 getDailyTasks called');
     let tasks = getFromStorage<DailyTask>(DAILY_TASKS_STORAGE_KEY);
+    console.log('🔍 Tasks from storage:', tasks);
     
     // Initialize with sample data if empty
     if (tasks.length === 0) {
-             const sampleTasks: DailyTask[] = [
-         {
-           id: '1',
-           title: 'Drink 8 glasses of water',
-           description: 'Stay hydrated throughout the day',
-           completed: false,
-           streak: 0,
-           scheduledTime: '09:00',
-           order: 0,
-           createdAt: new Date(),
-           updatedAt: new Date().toISOString(),
-         },
-         {
-           id: '2',
-           title: 'Exercise for 30 minutes',
-           description: 'Get your daily workout in',
-           completed: false,
-           streak: 0,
-           scheduledTime: '18:00',
-           order: 1,
-           createdAt: new Date(),
-           updatedAt: new Date().toISOString(),
-         }
-       ];
+      console.log('🔍 No tasks found, initializing with sample data');
+      const sampleTasks: DailyTask[] = [
+        {
+          id: '1',
+          title: 'Drink 8 glasses of water',
+          description: 'Stay hydrated throughout the day',
+          completed: false,
+          streak: 0,
+          scheduledTime: '09:00',
+          order: 0,
+          createdAt: new Date(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          title: 'Exercise for 30 minutes',
+          description: 'Get your daily workout in',
+          completed: false,
+          streak: 0,
+          scheduledTime: '18:00',
+          order: 1,
+          createdAt: new Date(),
+          updatedAt: new Date().toISOString(),
+        }
+      ];
       saveToStorage(DAILY_TASKS_STORAGE_KEY, sampleTasks);
       tasks = sampleTasks;
     }
@@ -107,6 +117,7 @@ export const taskService = {
     // Check if tasks need reset
     const config = taskService.getTaskConfiguration('daily');
     if (config && shouldResetTasks(config.updatedAt, 'daily')) {
+      console.log('🔍 Resetting daily tasks');
       const resetTasks = tasks.map(task => ({
         ...task,
         completed: false,
@@ -116,6 +127,7 @@ export const taskService = {
       return resetTasks;
     }
     
+    console.log('🔍 Returning tasks:', tasks);
     return tasks;
   },
 
@@ -238,10 +250,14 @@ export const taskService = {
   // Update a daily task
   async updateDailyTask(id: string, updates: Partial<DailyTask>): Promise<DailyTask> {
     await delay(300);
+    console.log('🔍 updateDailyTask called with id:', id, 'updates:', updates);
     const tasks = getFromStorage<DailyTask>(DAILY_TASKS_STORAGE_KEY);
+    console.log('🔍 Current tasks from storage:', tasks);
     const taskIndex = tasks.findIndex(task => task.id === id);
+    console.log('🔍 Task index found:', taskIndex);
     
     if (taskIndex === -1) {
+      console.error('❌ Daily task not found for update, id:', id);
       throw new Error('Daily task not found');
     }
 
@@ -251,8 +267,10 @@ export const taskService = {
       updatedAt: new Date().toISOString(),
     };
 
+    console.log('🔍 Updated task object:', updatedTask);
     tasks[taskIndex] = updatedTask;
     saveToStorage(DAILY_TASKS_STORAGE_KEY, tasks);
+    console.log('🔍 Task saved to storage, returning:', updatedTask);
     return updatedTask;
   },
 
@@ -295,53 +313,86 @@ export const taskService = {
 
   // Toggle daily task completion
   async toggleDailyTask(id: string): Promise<DailyTask> {
-    const task = await this.getDailyTask(id);
-    if (!task) {
-      throw new Error('Daily task not found');
+    try {
+      console.log('🔍 toggleDailyTask called with id:', id);
+      const task = await taskService.getDailyTask(id);
+      console.log('🔍 Found task:', task);
+      
+      if (!task) {
+        console.error('❌ Daily task not found for id:', id);
+        throw new Error('Daily task not found');
+      }
+
+      const updatedTask = {
+        ...task,
+        completed: !task.completed,
+        streak: !task.completed ? task.streak + 1 : Math.max(0, task.streak - 1),
+        updatedAt: new Date().toISOString(),
+      };
+
+      console.log('🔍 Updated task:', updatedTask);
+      const result = await taskService.updateDailyTask(id, updatedTask);
+      console.log('🔍 Update result:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error in toggleDailyTask:', error);
+      throw error;
     }
-
-    const updatedTask = {
-      ...task,
-      completed: !task.completed,
-      streak: !task.completed ? task.streak + 1 : Math.max(0, task.streak - 1),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return this.updateDailyTask(id, updatedTask);
   },
 
   // Toggle weekly task completion
   async toggleWeeklyTask(id: string): Promise<WeeklyTask> {
-    const task = await this.getWeeklyTask(id);
-    if (!task) {
-      throw new Error('Weekly task not found');
+    try {
+      console.log('🔍 toggleWeeklyTask called with id:', id);
+      const task = await taskService.getWeeklyTask(id);
+      console.log('🔍 Found weekly task:', task);
+      
+      if (!task) {
+        console.error('❌ Weekly task not found for id:', id);
+        throw new Error('Weekly task not found');
+      }
+
+      const updatedTask = {
+        ...task,
+        completed: !task.completed,
+        streak: !task.completed ? task.streak + 1 : Math.max(0, task.streak - 1),
+        updatedAt: new Date().toISOString(),
+      };
+
+      console.log('🔍 Updated weekly task:', updatedTask);
+      const result = await taskService.updateWeeklyTask(id, updatedTask);
+      console.log('🔍 Weekly task update result:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error in toggleWeeklyTask:', error);
+      throw error;
     }
-
-    const updatedTask = {
-      ...task,
-      completed: !task.completed,
-      streak: !task.completed ? task.streak + 1 : Math.max(0, task.streak - 1),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return this.updateWeeklyTask(id, updatedTask);
   },
 
   // Get a single daily task
   async getDailyTask(id: string): Promise<DailyTask | null> {
-    const tasks = await this.getDailyTasks();
-    return tasks.find(task => task.id === id) || null;
+    try {
+      console.log('🔍 getDailyTask called with id:', id);
+      const tasks = await taskService.getDailyTasks();
+      console.log('🔍 All daily tasks:', tasks);
+      const foundTask = tasks.find(task => task.id === id);
+      console.log('🔍 Found task by id:', foundTask);
+      return foundTask || null;
+    } catch (error) {
+      console.error('❌ Error in getDailyTask:', error);
+      return null;
+    }
   },
 
   // Get a single weekly task
   async getWeeklyTask(id: string): Promise<WeeklyTask | null> {
-    const tasks = await this.getWeeklyTasks();
+    const tasks = await taskService.getWeeklyTasks();
     return tasks.find(task => task.id === id) || null;
   },
 
   // Get today's weekly tasks
   async getTodayWeeklyTasks(): Promise<WeeklyTask[]> {
-    const tasks = await this.getWeeklyTasks();
+    const tasks = await taskService.getWeeklyTasks();
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     return tasks.filter(task => task.dayOfWeek === today);
   },
@@ -355,9 +406,9 @@ export const taskService = {
     todayWeeklyCompleted: number;
     todayWeeklyTotal: number;
   }> {
-    const dailyTasks = await this.getDailyTasks();
-    const weeklyTasks = await this.getWeeklyTasks();
-    const todayWeeklyTasks = await this.getTodayWeeklyTasks();
+    const dailyTasks = await taskService.getDailyTasks();
+    const weeklyTasks = await taskService.getWeeklyTasks();
+    const todayWeeklyTasks = await taskService.getTodayWeeklyTasks();
 
     return {
       dailyCompleted: dailyTasks.filter(task => task.completed).length,
