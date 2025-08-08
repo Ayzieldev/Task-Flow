@@ -230,53 +230,60 @@ const DashboardPage: React.FC = () => {
             ) : (
               <div className="goals-grid">
                 {goals.map((goal) => (
-                  <Link to={`/goal/${goal.id}`} key={goal.id} className="goal-card">
-                    <div className="goal-card__header">
-                      <h3>{goal.title}</h3>
-                      <span className={`priority-indicator ${getPriorityColor(goal.priority)}`}>
+                  <Link to={`/goal/${goal.id}`} key={goal.id} className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}>
+                    <div className="goal-card__content">
+                      <h3 className="goal-card__title">{goal.title}</h3>
+                      
+                      <span className={`goal-card__priority goal-card__priority--${goal.priority.toLowerCase()}`}>
                         {goal.priority}
                       </span>
-                    </div>
-                    
-                    {goal.description && (
-                      <p className="goal-card__description">{goal.description}</p>
-                    )}
-                    
-                    <div className="goal-card__progress">
-                      <div className="progress-info">
-                        <span className="progress-text">Progress</span>
-                        <span className="progress-percentage">{goal.progress}%</span>
-                      </div>
-                      <div className="progress-bar">
-                        <div 
-                          className="progress-fill" 
-                          style={{ width: `${goal.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    <div className="goal-card__meta">
-                      <div className="meta-item">
-                        <span className="meta-label">Tasks:</span>
-                        <span className="meta-value">{goal.taskBlocks.length}</span>
-                      </div>
-                      {goal.deadline && (
-                        <div className="meta-item">
-                          <span className="meta-label">Due:</span>
-                          <span className="meta-value">{formatDate(goal.deadline)}</span>
+                      
+                      {goal.description && (
+                        <div className="goal-description">
+                          <p>{goal.description}</p>
                         </div>
                       )}
-                      <div className="meta-item">
-                        <span className="meta-label">Created:</span>
-                        <span className="meta-value">{formatDate(goal.createdAt)}</span>
+                      
+                      <div className="goal-progress">
+                        <div className="progress-section">
+                          <div className="progress-bar">
+                            <div 
+                              className="progress-fill" 
+                              style={{ width: `${goal.progress}%` }}
+                            ></div>
+                          </div>
+                          <span className="progress-text">{goal.progress}% Complete</span>
+                        </div>
+                      </div>
+                      
+                      <div className="goal-stats">
+                        <div className="stat-item">
+                          <span className="stat-number">{goal.taskBlocks.length}</span>
+                          <span className="stat-label">Total Tasks</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-number">{goal.taskBlocks.filter(task => task.completed).length}</span>
+                          <span className="stat-label">Completed</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="stat-number">{goal.taskBlocks.filter(task => !task.completed).length}</span>
+                          <span className="stat-label">Remaining</span>
+                        </div>
+                      </div>
+                      
+                      <div className="goal-meta">
+                        {goal.deadline && (
+                          <div className="meta-item">
+                            <span className="meta-label">Due</span>
+                            <span className="meta-value">{formatDate(goal.deadline)}</span>
+                          </div>
+                        )}
+                        <div className="meta-item">
+                          <span className="meta-label">Created</span>
+                          <span className="meta-value">{formatDate(goal.createdAt)}</span>
+                        </div>
                       </div>
                     </div>
-                    
-                    {goal.completed && (
-                      <div className="goal-card__completed">
-                        <span>🎉 Completed!</span>
-                      </div>
-                    )}
                   </Link>
                 ))}
               </div>
