@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useReward } from '@/context/RewardContext';
-import { useGoals } from '@/hooks/useGoals';
+import { useGoals, useDeleteGoal } from '@/hooks/useGoals';
 import { useWeeklyTasks } from '@/hooks/useTasks';
 import { Goal, WeeklyTask } from '@/types';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
@@ -67,6 +67,7 @@ const DashboardPage: React.FC = () => {
   const { data: goals = [], isLoading, error } = useGoals();
   const { data: weeklyTasks } = useWeeklyTasks();
   const { triggerTaskReward, triggerGoalReward, triggerStreakReward } = useReward();
+  const deleteGoalMutation = useDeleteGoal();
 
   const getTotalProgress = () => {
     if (goals.length === 0) return 0;
@@ -80,6 +81,14 @@ const DashboardPage: React.FC = () => {
 
   const getTotalTasks = () => {
     return goals.reduce((sum, goal) => sum + goal.taskBlocks.length, 0);
+  };
+
+  const handleDeleteGoal = (goalId: string, goalTitle: string) => {
+    console.log('Delete button clicked for goal:', goalId, goalTitle);
+    if (window.confirm(`Are you sure you want to delete "${goalTitle}"? This action cannot be undone.`)) {
+      console.log('User confirmed deletion, calling mutation...');
+      deleteGoalMutation.mutate(goalId);
+    }
   };
 
   if (isLoading) {
@@ -230,9 +239,23 @@ const DashboardPage: React.FC = () => {
             ) : (
               <div className="goals-grid">
                 {goals.map((goal) => (
-                  <Link to={`/goal/${goal.id}`} key={goal.id} className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}>
-                    <div className="goal-card__content">
+                  <div key={goal.id} className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}>
+                                      <div className="goal-card__content">
+                    <div className="goal-card__header">
                       <h3 className="goal-card__title">{goal.title}</h3>
+                    </div>
+                    
+                    <button
+                      className="goal-card__delete-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteGoal(goal.id, goal.title);
+                      }}
+                      disabled={deleteGoalMutation.isPending}
+                      title="Delete goal"
+                    >
+                      🗑️
+                    </button>
                       
                       <span className={`goal-card__priority goal-card__priority--${goal.priority.toLowerCase()}`}>
                         {goal.priority}
@@ -284,7 +307,11 @@ const DashboardPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                    
+                    <Link to={`/goal/${goal.id}`} className="goal-card__link">
+                      <span className="sr-only">View goal details</span>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}
