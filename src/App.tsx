@@ -16,7 +16,7 @@ import DashboardPage from '@/pages/DashboardPage';
 import GoalDetailPage from '@/pages/GoalDetailPage';
 import GoalCreationPage from '@/pages/GoalCreationPage';
 import TaskCreationPage from '@/pages/TaskCreationPage';
-import DailyTasksPage from '@/pages/DailyTasksPage';
+
 import DayTasksPage from '@/pages/DayTasksPage';
 
 const App: React.FC = () => {
@@ -34,7 +34,7 @@ const App: React.FC = () => {
                   <Route path="/goal/:id" element={<GoalDetailPage />} />
                   <Route path="/create" element={<GoalCreationPage />} />
                   <Route path="/create-task" element={<TaskCreationPage />} />
-                  <Route path="/daily-tasks" element={<DailyTasksPage />} />
+
                   <Route path="/weekly-tasks/:day" element={<DayTasksPage />} />
                 </Routes>
               </main>

@@ -370,7 +370,7 @@ const GoalDetailPage: React.FC = () => {
         <div className="goal-header">
           <button 
             className="btn btn--secondary back-btn"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard?tab=goals')}
           >
             ← Back to Goals
           </button>

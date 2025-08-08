@@ -101,7 +101,7 @@ const DayTasksPage: React.FC = () => {
         <div className="page-header">
                            <button
                    className="btn btn--secondary back-btn"
-                   onClick={() => navigate('/dashboard')}
+                   onClick={() => navigate('/dashboard?tab=weekly')}
                  >
                    ← Back to Dashboard
                  </button>

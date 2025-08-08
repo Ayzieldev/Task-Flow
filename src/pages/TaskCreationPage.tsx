@@ -13,7 +13,6 @@ interface TaskFormData {
 interface TaskFormErrors {
   title?: string;
   description?: string;
-  dayOfWeek?: string;
 }
 
 const TaskCreationPage: React.FC = () => {
@@ -68,12 +67,13 @@ const TaskCreationPage: React.FC = () => {
       newErrors.description = 'Description must be less than 500 characters';
     }
 
-    if (taskType === 'weekly' && !formData.dayOfWeek) {
-      newErrors.dayOfWeek = 'Please select a day of the week';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const navigateBackToDashboard = () => {
+    const tab = taskType === 'weekly' ? 'weekly' : 'daily';
+    navigate(`/dashboard?tab=${tab}`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -93,7 +93,7 @@ const TaskCreationPage: React.FC = () => {
 
         createDailyTaskMutation.mutate(dailyTaskData, {
           onSuccess: () => {
-            navigate('/daily-tasks');
+            navigate('/dashboard?tab=daily');
           },
           onError: (error) => {
             console.error('Error creating daily task:', error);
@@ -113,7 +113,7 @@ const TaskCreationPage: React.FC = () => {
 
         createWeeklyTaskMutation.mutate(weeklyTaskData, {
           onSuccess: () => {
-            navigate('/dashboard');
+            navigate('/dashboard?tab=weekly');
           },
           onError: (error) => {
             console.error('Error creating weekly task:', error);
@@ -185,29 +185,6 @@ const TaskCreationPage: React.FC = () => {
               <span className="character-count">{formData.description.length}/500</span>
             </div>
 
-            {taskType === 'weekly' && (
-              <div className="form-group">
-                <label htmlFor="dayOfWeek">Day of Week *</label>
-                <select
-                  id="dayOfWeek"
-                  name="dayOfWeek"
-                  value={formData.dayOfWeek}
-                  onChange={handleInputChange}
-                  className={errors.dayOfWeek ? 'error' : ''}
-                >
-                  <option value="">Select a day</option>
-                  <option value="monday">Monday</option>
-                  <option value="tuesday">Tuesday</option>
-                  <option value="wednesday">Wednesday</option>
-                  <option value="thursday">Thursday</option>
-                  <option value="friday">Friday</option>
-                  <option value="saturday">Saturday</option>
-                  <option value="sunday">Sunday</option>
-                </select>
-                {errors.dayOfWeek && <span className="error-message">{errors.dayOfWeek}</span>}
-              </div>
-            )}
-
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="scheduledTime">Scheduled Time</label>
@@ -245,7 +222,7 @@ const TaskCreationPage: React.FC = () => {
               <button 
                 type="button" 
                 className="btn btn--secondary" 
-                onClick={() => navigate(taskType === 'weekly' ? '/dashboard' : '/daily-tasks')}
+                onClick={navigateBackToDashboard}
               >
                 Cancel
               </button>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useReward } from '@/context/RewardContext';
 import { useGoals, useDeleteGoal } from '@/hooks/useGoals';
 import { useWeeklyTasks } from '@/hooks/useTasks';
@@ -63,11 +63,20 @@ import DailyTasksPage from './DailyTasksPage';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'goals' | 'daily' | 'weekly'>('goals');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'goals' | 'daily' | 'weekly') || 'goals';
+  const [activeTab, setActiveTab] = useState<'goals' | 'daily' | 'weekly'>(initialTab);
   const { data: goals = [], isLoading, error } = useGoals();
   const { data: weeklyTasks } = useWeeklyTasks();
   const { triggerTaskReward, triggerGoalReward, triggerStreakReward } = useReward();
   const deleteGoalMutation = useDeleteGoal();
+
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') as 'goals' | 'daily' | 'weekly' | null;
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
 
   const getTotalProgress = () => {
     if (goals.length === 0) return 0;
@@ -192,7 +201,7 @@ const DashboardPage: React.FC = () => {
           <div className="tab-navigation">
             <button 
               className={`tab-button ${activeTab === 'goals' ? 'active' : ''}`}
-              onClick={() => setActiveTab('goals')}
+              onClick={() => { setActiveTab('goals'); setSearchParams({ tab: 'goals' }); }}
             >
               <span className="tab-icon">🎯</span>
               Your Goals
@@ -200,14 +209,14 @@ const DashboardPage: React.FC = () => {
             </button>
             <button 
               className={`tab-button ${activeTab === 'daily' ? 'active' : ''}`}
-              onClick={() => setActiveTab('daily')}
+              onClick={() => { setActiveTab('daily'); setSearchParams({ tab: 'daily' }); }}
             >
               <span className="tab-icon">📅</span>
               Daily Tasks
             </button>
             <button 
               className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
-              onClick={() => setActiveTab('weekly')}
+              onClick={() => { setActiveTab('weekly'); setSearchParams({ tab: 'weekly' }); }}
             >
               <span className="tab-icon">📊</span>
               Weekly Tasks
