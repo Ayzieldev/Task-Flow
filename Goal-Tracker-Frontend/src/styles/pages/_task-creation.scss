@@ -1,7 +1,7 @@
 @use '@/styles/abstracts/variables' as *;
 @use '@/styles/abstracts/mixins' as *;
 
-.goal-creation-page {
+.task-creation-page {
   min-height: 100vh;
   padding: $spacing-2xl 0;
   background: var(--gradient-background);
@@ -12,7 +12,7 @@
     padding: 0 $spacing-md;
   }
 
-  .goal-creation-form {
+  .task-creation-form {
     @include card-base;
     padding: $spacing-2xl;
     max-width: 600px;
@@ -47,7 +47,7 @@
     }
   }
 
-  .goal-form {
+  .task-form {
     .form-group {
       margin-bottom: $spacing-xl;
 
@@ -218,9 +218,6 @@
     }
   }
 }
-
-// Priority indicator styles
-
 
 // Form validation animations
 @keyframes shake {

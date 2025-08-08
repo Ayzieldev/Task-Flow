@@ -1,30 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-
-interface Goal {
-  id: string;
-  title: string;
-  description?: string;
-  deadline?: string;
-  priority: 'low' | 'medium' | 'high';
-  reward?: string;
-  stepByStep: boolean;
-  completed: boolean;
-  progress: number;
-  taskBlocks: any[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-const DashboardPage: React.FC = () => {
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const savedGoals = JSON.parse(localStorage.getItem('goals') || '[]');
-    setGoals(savedGoals);
-    setLoading(false);
-  }, []);
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useGoals } from '@/hooks/useGoals';
+import { useWeeklyTasks } from '@/hooks/useTasks';
+import { Goal, WeeklyTask } from '@/types';
+import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
+import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
+import DailyTasksPage from './DailyTasksPage';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -42,6 +23,49 @@ const DashboardPage: React.FC = () => {
     });
   };
 
+  const getDayEmoji = (day: string) => {
+    const dayEmojis: Record<string, string> = {
+      monday: '📅',
+      tuesday: '📅',
+      wednesday: '📅',
+      thursday: '📅',
+      friday: '📅',
+      saturday: '🎉',
+      sunday: '☀️',
+    };
+    return dayEmojis[day] || '📅';
+  };
+
+  const formatDayName = (day: string) => {
+    return day.charAt(0).toUpperCase() + day.slice(1);
+  };
+
+  const groupTasksByDay = (tasks: WeeklyTask[]) => {
+    const grouped: Record<string, WeeklyTask[]> = {
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
+      saturday: [],
+      sunday: [],
+    };
+
+    tasks?.forEach(task => {
+      if (grouped[task.dayOfWeek]) {
+        grouped[task.dayOfWeek].push(task);
+      }
+    });
+
+    return grouped;
+  };
+
+const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'goals' | 'daily' | 'weekly'>('goals');
+  const { data: goals = [], isLoading, error } = useGoals();
+  const { data: weeklyTasks } = useWeeklyTasks();
+
   const getTotalProgress = () => {
     if (goals.length === 0) return 0;
     const totalProgress = goals.reduce((sum, goal) => sum + goal.progress, 0);
@@ -56,11 +80,27 @@ const DashboardPage: React.FC = () => {
     return goals.reduce((sum, goal) => sum + goal.taskBlocks.length, 0);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="dashboard-page">
         <div className="container">
-          <div className="loading">Loading your goals...</div>
+          <div className="loading">
+            <LoadingSpinner size="lg" />
+            <p>Loading your goals...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-page">
+        <div className="container">
+          <ErrorMessage 
+            message="Error loading goals. Please try again."
+            onRetry={() => window.location.reload()}
+          />
         </div>
       </div>
     );
@@ -111,16 +151,44 @@ const DashboardPage: React.FC = () => {
         </div>
 
         <div className="dashboard-content">
-          <div className="goals-section">
-            <div className="goals-header">
-              <div className="goals-title">
-                <h2>Your Goals</h2>
-                <span className="goals-count">{goals.length} goal{goals.length !== 1 ? 's' : ''}</span>
+          {/* Tab Navigation */}
+          <div className="tab-navigation">
+            <button 
+              className={`tab-button ${activeTab === 'goals' ? 'active' : ''}`}
+              onClick={() => setActiveTab('goals')}
+            >
+              <span className="tab-icon">🎯</span>
+              Your Goals
+              <span className="tab-count">{goals.length}</span>
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'daily' ? 'active' : ''}`}
+              onClick={() => setActiveTab('daily')}
+            >
+              <span className="tab-icon">📅</span>
+              Daily Tasks
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'weekly' ? 'active' : ''}`}
+              onClick={() => setActiveTab('weekly')}
+            >
+              <span className="tab-icon">📊</span>
+              Weekly Tasks
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'goals' && (
+            <div className="goals-section">
+              <div className="goals-header">
+                <div className="goals-title">
+                  <h2>Your Goals</h2>
+                  <span className="goals-count">{goals.length} goal{goals.length !== 1 ? 's' : ''}</span>
+                </div>
+                <Link to="/create" className="btn btn--primary">
+                  + Create New Goal
+                </Link>
               </div>
-              <Link to="/create" className="btn btn--primary">
-                + Create New Goal
-              </Link>
-            </div>
             
             {goals.length === 0 ? (
               <div className="empty-state">
@@ -186,6 +254,88 @@ const DashboardPage: React.FC = () => {
               </div>
             )}
           </div>
+          )}
+
+          {activeTab === 'daily' && (
+            <div className="daily-tasks-section">
+              <DailyTasksPage />
+            </div>
+          )}
+
+                                {activeTab === 'weekly' && (
+            <div className="weekly-tasks-section">
+              <div className="weekly-tasks-grid">
+                {Object.entries(groupTasksByDay(weeklyTasks || [])).map(([day, tasks]) => {
+                  const completedTasks = tasks.filter(task => task.completed);
+                  const completionRate = tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+                  
+                  return (
+                    <div 
+                      key={day} 
+                      className="day-container clickable"
+                      onClick={() => navigate(`/weekly-tasks/${day}`)}
+                    >
+                      <div className="day-header">
+                        <div className="day-info">
+                          <span className="day-icon">{getDayEmoji(day)}</span>
+                          <h3 className="day-title">{formatDayName(day)}</h3>
+                        </div>
+                        <div className="day-actions">
+                          <span className="task-count">{tasks.length} tasks</span>
+                          <span className="view-tasks">View Tasks →</span>
+                        </div>
+                      </div>
+
+                      <div className="day-content">
+                        <div className="day-description">
+                          {tasks.length === 0 ? (
+                            <p>No tasks scheduled for {formatDayName(day).toLowerCase()}</p>
+                          ) : (
+                            <p>Complete your {formatDayName(day).toLowerCase()} tasks</p>
+                          )}
+                        </div>
+
+                        <div className="day-progress">
+                          <div className="progress-section">
+                            <div className="progress-bar">
+                              <div 
+                                className="progress-fill" 
+                                style={{ width: `${completionRate}%` }}
+                              ></div>
+                            </div>
+                            <span className="progress-text">{completionRate}% Complete</span>
+                          </div>
+                        </div>
+
+                        <div className="day-stats">
+                          <div className="stat-item">
+                            <span className="stat-number">{tasks.length}</span>
+                            <span className="stat-label">Total Tasks</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{completedTasks.length}</span>
+                            <span className="stat-label">Completed</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-number">{tasks.length - completedTasks.length}</span>
+                            <span className="stat-label">Remaining</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {(weeklyTasks || []).length === 0 && (
+                <div className="empty-state">
+                  <div className="empty-icon">📅</div>
+                  <h3>No weekly tasks yet</h3>
+                  <p>Start planning your week by clicking on any day!</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -3,16 +3,16 @@ export interface Goal {
   id: string;
   title: string;
   description?: string;
-  deadline?: Date;
+  deadline?: string;
   priority: 'low' | 'medium' | 'high';
   reward?: string;
   stepByStep: boolean;
   completed: boolean;
   progress: number;
   taskBlocks: TaskBlock[];
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string;
 }
 
 // Task Block Types
@@ -45,8 +45,8 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Theme Types
@@ -78,7 +78,7 @@ export interface PaginatedResponse<T> {
 export interface GoalFormData {
   title: string;
   description?: string;
-  deadline?: Date;
+  deadline?: string;
   priority: Priority;
   reward?: string;
   stepByStep: boolean;
@@ -200,4 +200,45 @@ export type DeepPartial<T> = {
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>; 
+export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
+
+export interface DailyTask {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  streak: number;
+  isRewardTrigger?: boolean;
+  rewardNote?: string;
+  scheduledTime?: string; // "HH:MM" format for when to complete the task
+  order: number;
+  createdAt: Date;
+  updatedAt: string;
+}
+
+export interface WeeklyTask {
+  id: string;
+  title: string;
+  description?: string;
+  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  completed: boolean;
+  streak: number;
+  isRewardTrigger?: boolean;
+  rewardNote?: string;
+  scheduledTime?: string; // "HH:MM" format for when to complete the task
+  order: number;
+  createdAt: Date;
+  updatedAt: string;
+}
+
+export interface TaskConfiguration {
+  id: string;
+  type: 'daily' | 'weekly';
+  title: string;
+  description?: string;
+  tasks: DailyTask[] | WeeklyTask[];
+  resetTime: string; // "00:00" for daily, "sunday 00:00" for weekly
+  timezone: string;
+  createdAt: Date;
+  updatedAt: string;
+} 

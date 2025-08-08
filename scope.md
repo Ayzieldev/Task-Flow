@@ -2,17 +2,18 @@
 
 ## 🎯 Project Overview
 
-A fun, engaging goal tracking application that makes users feel accomplished through flexible task management, visual feedback, and reward systems. The app supports both single tasks and grouped tasks with nested subtasks, with offline-first functionality and cloud sync capabilities.
+A fun, engaging goal tracking application that makes users feel accomplished through flexible task management, visual feedback, and reward systems. The app supports both single tasks and grouped tasks with nested subtasks, with offline-first functionality and cloud sync capabilities using React Query for efficient data management.
 
 ## 🏗️ Technical Architecture
 
 ### Tech Stack
 - **Frontend**: React 18 + TypeScript
 - **Styling**: SCSS with BEM methodology
+- **Data Management**: React Query (TanStack Query) + Local Storage
 - **Backend**: Node.js + Express + TypeScript (Future Implementation)
-- **Database**: MongoDB (Future Implementation)
-- **State Management**: React Context + Local Storage
-- **Offline Support**: Service Workers + IndexedDB (Future Implementation)
+- **Database**: MongoDB Atlas
+- **State Management**: React Query + React Context
+- **Offline Support**: React Query with local storage fallback
 - **Deployment**: Vercel (Frontend) + Railway/Heroku (Backend - Future)
 
 ### Project Structure
@@ -37,10 +38,16 @@ Goal-Tracker/
 │   │   │       ├── SyncManager/
 │   │   │       └── RewardSystem/
 │   │   ├── hooks/
+│   │   │   ├── useLocalStorage.ts
+│   │   │   └── useGoals.ts (React Query hooks)
 │   │   ├── context/
+│   │   │   ├── ThemeContext.tsx
+│   │   │   └── QueryClient.tsx (React Query provider)
+│   │   ├── services/
+│   │   │   ├── goalService.ts (API calls)
+│   │   │   └── localStorageService.ts
 │   │   ├── types/
 │   │   ├── utils/
-│   │   ├── services/
 │   │   └── styles/
 │   │       ├── abstracts/
 │   │       ├── base/
@@ -105,7 +112,7 @@ Goal-Tracker/
 2. **Log In Button**: Direct navigation to goal creation
 3. **Goal Creation**: Full goal creation workflow
 4. **Goal Management**: View, edit, and track goals
-5. **Local Storage**: All data persists locally
+5. **Local Storage**: All data persists locally with React Query caching
 
 ## 📋 Data Models
 
@@ -153,6 +160,54 @@ interface Subtask {
   rewardNote?: string;
   locked?: boolean;
   order: number;
+}
+```
+
+### Daily Task Object
+```typescript
+interface DailyTask {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  streak: number;
+  isRewardTrigger?: boolean;
+  rewardNote?: string;
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Weekly Task Object
+```typescript
+interface WeeklyTask {
+  id: string;
+  title: string;
+  description?: string;
+  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  completed: boolean;
+  streak: number;
+  isRewardTrigger?: boolean;
+  rewardNote?: string;
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Daily/Weekly Task Configuration
+```typescript
+interface TaskConfiguration {
+  id: string;
+  type: 'daily' | 'weekly';
+  title: string;
+  description?: string;
+  tasks: DailyTask[] | WeeklyTask[];
+  resetTime: string; // "00:00" for daily, "sunday 00:00" for weekly
+  timezone: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
@@ -222,7 +277,33 @@ interface Subtask {
 - Basic task functionality ✅
 - Enhanced user experience ✅
 
-### Phase 3: Advanced Task Features (Week 3) 🔄
+### Phase 3: React Query Integration (Week 3) ✅ Done
+**Tasks:**
+1. **React Query Setup** ✅
+   - Install and configure React Query
+   - Set up QueryClient provider
+   - Create custom hooks for goals and tasks
+   - Implement optimistic updates
+
+2. **Data Management Migration** ✅
+   - Migrate from Context to React Query
+   - Create goalService for API calls
+   - Implement local storage fallback
+   - Add error handling and loading states
+
+3. **Enhanced Caching** ✅
+   - Configure cache invalidation
+   - Implement background refetching
+   - Add offline support with local storage
+   - Optimize query performance
+
+**Deliverables:**
+- React Query integration complete ✅
+- Enhanced data management ✅
+- Better caching and performance ✅
+- Improved user experience ✅
+
+### Phase 4: Advanced Task Features (Week 4) 📋
 **Tasks:**
 1. **Grouped Tasks**
    - Grouped task creation interface
@@ -245,7 +326,7 @@ interface Subtask {
 - Step-by-step mode working
 - Task reordering capability
 
-### Phase 4: Reward System (Week 4) 📋
+### Phase 5: Reward System (Week 5) 📋
 **Tasks:**
 1. **Reward Implementation**
    - Reward trigger logic
@@ -269,11 +350,11 @@ interface Subtask {
 - Engaging animations
 - Polished user experience
 
-### Phase 5: Backend & Sync (Week 5) 📋
+### Phase 6: Backend & Sync (Week 6) 📋
 **Tasks:**
 1. **Backend Setup**
    - Node.js + Express server
-   - MongoDB connection
+   - MongoDB Atlas connection
    - User authentication
    - API endpoints
 
@@ -284,7 +365,7 @@ interface Subtask {
    - Indexing
 
 3. **Sync System**
-   - Offline-first architecture
+   - React Query sync with backend
    - Conflict resolution
    - Real-time sync
    - Data migration
@@ -294,11 +375,37 @@ interface Subtask {
 - Database integration
 - Sync functionality
 
-### Phase 6: Offline & Polish (Week 6) 📋
+### Phase 7: Daily/Weekly Task System (Week 7) 📋
+**Tasks:**
+1. **Daily Task Implementation**
+   - Daily task creation and management
+   - Streak tracking system
+   - Daily reset logic
+   - Quick completion actions
+
+2. **Weekly Task Implementation**
+   - Weekly task scheduling interface
+   - Day-of-week selection
+   - Weekly reset logic
+   - Calendar view component
+
+3. **Task Configuration System**
+   - Task template system
+   - Reset time configuration
+   - Timezone handling
+   - Progress tracking
+
+**Deliverables:**
+- Complete daily task functionality
+- Weekly task scheduling system
+- Task configuration management
+- Streak tracking and statistics
+
+### Phase 8: Offline & Polish (Week 8) 📋
 **Tasks:**
 1. **Offline Support**
+   - React Query offline capabilities
    - Service worker implementation
-   - IndexedDB for offline storage
    - Sync queue management
    - Offline indicators
 
@@ -358,19 +465,30 @@ interface Subtask {
 - **Notes**: Custom reward messages
 - **History**: Track completed rewards
 
-### 7. Sync & Offline 📋
-- **Offline-First**: All functionality works without internet
-- **Background Sync**: Automatic sync when online
-- **Conflict Resolution**: Handle simultaneous edits
-- **Data Migration**: Version updates and data structure changes
+### 7. React Query Data Management ✅
+- **Efficient Caching**: Smart caching with automatic invalidation
+- **Optimistic Updates**: Instant UI feedback
+- **Background Sync**: Automatic data synchronization
+- **Error Handling**: Graceful error states and retry logic
+- **Offline Support**: Local storage fallback
+
+### 8. Daily/Weekly Task System 📋
+- **Daily Tasks**: Simple recurring tasks that reset every day
+- **Weekly Tasks**: Complex scheduling with different tasks per day
+- **Streak Tracking**: Track consecutive days of completion
+- **Quick Actions**: Fast task completion with swipe/click
+- **Template System**: Pre-built routines (morning, evening, etc.)
+- **Calendar View**: Visual weekly schedule overview
+- **Progress Tracking**: Daily and weekly completion statistics
+- **Reset Logic**: Automatic daily/weekly resets with timezone handling
 
 ## 🔧 Technical Considerations
 
 ### Performance
+- **React Query Caching**: Intelligent caching strategies
 - **Lazy Loading**: Load components on demand
 - **Virtual Scrolling**: Handle large goal lists
 - **Debounced Updates**: Prevent excessive API calls
-- **Caching**: Smart caching strategies
 
 ### Security
 - **Input Validation**: Server-side and client-side validation
@@ -420,7 +538,7 @@ interface Subtask {
 
 ### Backend (Railway/Heroku) 📋
 - **Auto-scaling**: Handle traffic spikes
-- **Database**: Managed MongoDB service
+- **Database**: Managed MongoDB Atlas service
 - **Monitoring**: Application performance monitoring
 - **Logs**: Centralized logging system
 
@@ -456,17 +574,36 @@ interface Subtask {
 - Local storage integration
 - Theme switching
 - Responsive design
+- React Query integration with optimistic updates
+- Enhanced data management with caching
+- Error handling and loading states
+- Custom hooks for all CRUD operations
 
 ### In Progress 🔄
 - Advanced task features (grouped tasks, step-by-step mode)
 - Task block components
-- Drag-and-drop functionality
 
 ### Planned 📋
+- Daily/Weekly Task System
 - Reward system implementation
 - Backend development
 - Offline functionality
 - User authentication
 - Sync capabilities
 
-This updated scope document reflects the current state of the Flexible Goal Tracker application, including the new header functionalities and simplified user flow without backend dependencies. 
+## 🆕 React Query Integration Benefits
+
+### Why React Query?
+1. **Simplified Data Management**: Automatic caching, background updates, and error handling
+2. **Better Performance**: Intelligent caching reduces unnecessary API calls
+3. **Offline Support**: Built-in offline capabilities with local storage fallback
+4. **Developer Experience**: Less boilerplate code and better debugging
+5. **Future-Proof**: Easy migration to backend APIs when ready
+
+### Implementation Strategy
+- **Phase 1**: Set up React Query with local storage
+- **Phase 2**: Create custom hooks for goals and tasks
+- **Phase 3**: Add optimistic updates and error handling
+- **Phase 4**: Integrate with backend APIs when available
+
+This updated scope document reflects the integration of React Query (TanStack Query) as the primary data management solution, providing better performance, caching, and developer experience while maintaining the existing functionality. 

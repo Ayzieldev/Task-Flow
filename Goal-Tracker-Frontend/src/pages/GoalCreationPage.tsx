@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCreateGoal } from '@/hooks/useGoals';
 
 interface GoalFormData {
   title: string;
@@ -12,6 +13,7 @@ interface GoalFormData {
 
 const GoalCreationPage: React.FC = () => {
   const navigate = useNavigate();
+  const createGoalMutation = useCreateGoal();
   const [formData, setFormData] = useState<GoalFormData>({
     title: '',
     description: '',
@@ -68,24 +70,28 @@ const GoalCreationPage: React.FC = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Create new goal
-      const newGoal = {
-        id: Date.now().toString(),
-        ...formData,
-        completed: false,
-        progress: 0,
-        taskBlocks: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      // Save to localStorage (temporary until backend is implemented)
-      const existingGoals = JSON.parse(localStorage.getItem('goals') || '[]');
-      existingGoals.push(newGoal);
-      localStorage.setItem('goals', JSON.stringify(existingGoals));
-
-      // Navigate to goal detail page
-      navigate(`/goal/${newGoal.id}`);
+      createGoalMutation.mutate(
+        {
+          title: formData.title,
+          description: formData.description,
+          deadline: formData.deadline,
+          priority: formData.priority,
+          reward: formData.reward,
+          stepByStep: formData.stepByStep,
+          completed: false,
+          progress: 0,
+          taskBlocks: [],
+        },
+        {
+          onSuccess: (newGoal) => {
+            navigate(`/goal/${newGoal.id}`);
+          },
+          onError: (error) => {
+            console.error('Error creating goal:', error);
+            // You could add a toast notification here
+          },
+        }
+      );
     }
   };
 
@@ -189,8 +195,12 @@ const GoalCreationPage: React.FC = () => {
               <button type="button" className="btn btn--secondary" onClick={() => navigate('/')}>
                 Cancel
               </button>
-              <button type="submit" className="btn btn--primary">
-                Create Goal
+              <button 
+                type="submit" 
+                className="btn btn--primary"
+                disabled={createGoalMutation.isPending}
+              >
+                {createGoalMutation.isPending ? 'Creating...' : 'Create Goal'}
               </button>
             </div>
           </form>
