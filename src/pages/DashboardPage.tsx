@@ -7,6 +7,7 @@ import { Goal, WeeklyTask } from '@/types';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
 import DailyTasksPage from './DailyTasksPage';
+import ConfirmDialog from '@/components/design/ConfirmDialog/ConfirmDialog';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -70,6 +71,8 @@ const DashboardPage: React.FC = () => {
   const { data: weeklyTasks } = useWeeklyTasks();
   const { triggerTaskReward, triggerGoalReward, triggerStreakReward } = useReward();
   const deleteGoalMutation = useDeleteGoal();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<Goal | null>(null);
 
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab') as 'goals' | 'daily' | 'weekly' | null;
@@ -93,11 +96,17 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleDeleteGoal = (goalId: string, goalTitle: string) => {
-    console.log('Delete button clicked for goal:', goalId, goalTitle);
-    if (window.confirm(`Are you sure you want to delete "${goalTitle}"? This action cannot be undone.`)) {
-      console.log('User confirmed deletion, calling mutation...');
-      deleteGoalMutation.mutate(goalId);
+    const goal = goals.find(g => g.id === goalId) || null;
+    setGoalToDelete(goal);
+    setConfirmOpen(true);
+  };
+
+  const confirmDeleteGoal = () => {
+    if (goalToDelete) {
+      deleteGoalMutation.mutate(goalToDelete.id);
     }
+    setConfirmOpen(false);
+    setGoalToDelete(null);
   };
 
   if (isLoading) {
@@ -127,6 +136,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
+    <>
     <div className="dashboard-page">
       <div className="container">
         <div className="dashboard-header">
@@ -409,7 +419,20 @@ const DashboardPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title="Delete Goal"
+        message={`Are you sure you want to delete "${goalToDelete?.title ?? 'this goal'}"? This action cannot be undone.`}
+        isDanger
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        isLoading={deleteGoalMutation.isPending}
+        onConfirm={confirmDeleteGoal}
+        onCancel={() => { setConfirmOpen(false); setGoalToDelete(null); }}
+      />
     </div>
+  </>
   );
 };
 

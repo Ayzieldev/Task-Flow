@@ -1,7 +1,7 @@
 @use '../../../styles/abstracts/variables' as *;
 @use '../../../styles/abstracts/mixins' as *;
 
-.modal-overlay {
+.app-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -25,8 +25,7 @@
     }
   }
 }
-
-.modal {
+.app-modal {
   background: var(--color-surface);
   border-radius: $border-radius-lg;
   border: 1px solid var(--color-border);
@@ -50,18 +49,18 @@
   }
 
   &--sm {
-    width: 400px;
+    width: 380px;
   }
 
   &--md {
-    width: 600px;
+    width: 520px;
   }
 
   &--lg {
-    width: 800px;
+    width: 720px;
   }
 
-  .modal-header {
+  .app-modal__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -70,14 +69,14 @@
     background: var(--color-surface);
     flex-shrink: 0;
 
-    .modal-title {
+    .app-modal__title {
       font-size: $font-size-lg;
       font-weight: $font-weight-semibold;
       color: var(--color-text);
       margin: 0;
     }
 
-    .modal-close-btn {
+    .app-modal__close {
       background: none;
       border: none;
       font-size: $font-size-xl;
@@ -104,7 +103,7 @@
     }
   }
 
-  .modal-content {
+  .app-modal__content {
     padding: $spacing-lg;
     overflow-y: auto;
     flex: 1;
@@ -112,20 +111,20 @@
 }
 
 @include mobile {
-  .modal-overlay {
+  .app-modal-overlay {
     padding: $spacing-md;
   }
 
-  .modal {
+  .app-modal {
     width: 100% !important;
     max-width: 100%;
     max-height: 100vh;
 
-    .modal-header {
+    .app-modal__header {
       padding: $spacing-md;
     }
 
-    .modal-content {
+    .app-modal__content {
       padding: $spacing-md;
     }
   }
