@@ -1,10 +1,10 @@
 [build]
   base = "."
-  command = "npm install && npm run build"
-  publish = "build"
+  command = "bash Goal-Tracker-Frontend/build.sh"
+  publish = "Goal-Tracker-Frontend/build"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
 
 [[redirects]]
