@@ -15,6 +15,7 @@
     @include mobile {
       flex-direction: column;
       margin-top: $spacing-xl;
+      gap: 0;
     }
   }
 
@@ -192,8 +193,13 @@
       @include mobile {
         grid-template-columns: 1fr;
         grid-template-rows: repeat(4, auto);
-        gap: $spacing-lg;
+        gap: $spacing-xl;
+        padding: 0;
       }
+    }
+
+    @include mobile {
+      margin: 0!important;
     }
   }
   
@@ -218,6 +224,7 @@
       
       @include mobile {
         font-size: $font-size-3xl;
+        width: 100%!important;
       }
     }
     
