@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/context/ThemeContext';
+import { useMobile } from '@/hooks/useMobile';
+import DownloadModal from '@/components/design/DownloadModal/DownloadModal';
 import './Header.scss';
 
 const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  const { isMobile, showInstallPrompt, installApp, isInstalled } = useMobile();
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  const handleDownload = () => {
+    setShowDownloadModal(true);
+  };
 
   return (
     <header className="header">
@@ -19,9 +27,12 @@ const Header: React.FC = () => {
             <Link to="/dashboard" className="header__action-btn">
               📱 App
             </Link>
-            <Link to="/" className="header__action-btn">
-              Download
-            </Link>
+            <button
+              className="header__action-btn"
+              onClick={handleDownload}
+            >
+              {isMobile && isInstalled ? '📱 Installed' : '📥 Download'}
+            </button>
             
             <button
               className="header__theme-toggle"
@@ -33,6 +44,11 @@ const Header: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <DownloadModal 
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+      />
     </header>
   );
 };

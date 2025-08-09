@@ -7,8 +7,8 @@ import './styles/main.scss';
 
 // Components
 import Header from '@/components/design/Header/Header';
-import Footer from '@/components/design/Footer/Footer';
 import RewardAnimation from '@/components/design/RewardAnimation/RewardAnimation';
+import MobileInstallPrompt from '@/components/design/MobileInstallPrompt/MobileInstallPrompt';
 
 // Pages
 import HomePage from '@/pages/HomePage';
@@ -38,8 +38,8 @@ const App: React.FC = () => {
                   <Route path="/weekly-tasks/:day" element={<DayTasksPage />} />
                 </Routes>
               </main>
-              <Footer />
               <RewardAnimationWrapper />
+              <MobileInstallPrompt />
                </div>
             </Router>
         </RewardProvider>

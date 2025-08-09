@@ -3,11 +3,100 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useReward } from '@/context/RewardContext';
 import { useGoals, useDeleteGoal } from '@/hooks/useGoals';
 import { useWeeklyTasks } from '@/hooks/useTasks';
+import { useMobileGestures } from '@/hooks/useMobileGestures';
 import { Goal, WeeklyTask } from '@/types';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
 import DailyTasksPage from './DailyTasksPage';
 import ConfirmDialog from '@/components/design/ConfirmDialog/ConfirmDialog';
+
+// GoalCard component with mobile gestures
+const GoalCard: React.FC<{
+  goal: Goal;
+  onDelete: (id: string, title: string) => void;
+  onNavigate: (path: string) => void;
+}> = ({ goal, onDelete, onNavigate }) => {
+  const { handleTouchStart } = useMobileGestures({
+    onSwipeLeft: () => onDelete(goal.id, goal.title),
+    onSwipeRight: () => onNavigate(`/goal/${goal.id}`),
+    onLongPress: () => onDelete(goal.id, goal.title),
+    onTap: () => onNavigate(`/goal/${goal.id}`)
+  });
+
+  return (
+    <div 
+      className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}
+      onClick={() => onNavigate(`/goal/${goal.id}`)}
+      onTouchStart={handleTouchStart}
+    >
+      <div className="goal-card__content">
+        <div className="goal-card__header">
+          <h3 className="goal-card__title">{goal.title}</h3>
+          <button
+            className="goal-card__delete-btn"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(goal.id, goal.title);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            title="Delete goal"
+          >
+            🗑️
+          </button>
+        </div>
+        
+        {goal.description && (
+          <div className="goal-description">
+            <p>{goal.description}</p>
+          </div>
+        )}
+        
+        <div className="goal-progress">
+          <div className="progress-section">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${goal.progress}%` }}
+              ></div>
+            </div>
+            <span className="progress-text">{goal.progress}% Complete</span>
+          </div>
+        </div>
+        
+        <div className="goal-stats">
+          <div className="stat-item">
+            <span className="stat-number">{goal.taskBlocks.length}</span>
+            <span className="stat-label">Total Tasks</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{goal.taskBlocks.filter(task => task.completed).length}</span>
+            <span className="stat-label">Completed</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{goal.taskBlocks.filter(task => !task.completed).length}</span>
+            <span className="stat-label">Remaining</span>
+          </div>
+        </div>
+        
+        <div className="goal-meta">
+          {goal.deadline && (
+            <div className="meta-item">
+              <span className="meta-label">Due</span>
+              <span className="meta-value">{formatDate(goal.deadline)}</span>
+            </div>
+          )}
+          <div className="meta-item">
+            <span className="meta-label">Created</span>
+            <span className="meta-value">{formatDate(goal.createdAt)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -136,7 +225,6 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <>
     <div className="dashboard-page">
       <div className="container">
         <div className="dashboard-header">
@@ -260,79 +348,12 @@ const DashboardPage: React.FC = () => {
             ) : (
               <div className="goals-grid">
                 {goals.map((goal) => (
-                  <div 
-                    key={goal.id} 
-                    className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}
-                    onClick={() => navigate(`/goal/${goal.id}`)}
-                  >
-                    <div className="goal-card__content">
-                      <div className="goal-card__header">
-                        <h3 className="goal-card__title">{goal.title}</h3>
-                      </div>
-                      
-                      <button
-                        className="goal-card__delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteGoal(goal.id, goal.title);
-                        }}
-                        disabled={deleteGoalMutation.isPending}
-                        title="Delete goal"
-                      >
-                        🗑️
-                      </button>
-                      
-                      <span className={`goal-card__priority goal-card__priority--${goal.priority.toLowerCase()}`}>
-                        {goal.priority}
-                      </span>
-                      
-                      {goal.description && (
-                        <div className="goal-description">
-                          <p>{goal.description}</p>
-                        </div>
-                      )}
-                      
-                      <div className="goal-progress">
-                        <div className="progress-section">
-                          <div className="progress-bar">
-                            <div 
-                              className="progress-fill" 
-                              style={{ width: `${goal.progress}%` }}
-                            ></div>
-                          </div>
-                          <span className="progress-text">{goal.progress}% Complete</span>
-                        </div>
-                      </div>
-                      
-                      <div className="goal-stats">
-                        <div className="stat-item">
-                          <span className="stat-number">{goal.taskBlocks.length}</span>
-                          <span className="stat-label">Total Tasks</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-number">{goal.taskBlocks.filter(task => task.completed).length}</span>
-                          <span className="stat-label">Completed</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-number">{goal.taskBlocks.filter(task => !task.completed).length}</span>
-                          <span className="stat-label">Remaining</span>
-                        </div>
-                      </div>
-                      
-                      <div className="goal-meta">
-                        {goal.deadline && (
-                          <div className="meta-item">
-                            <span className="meta-label">Due</span>
-                            <span className="meta-value">{formatDate(goal.deadline)}</span>
-                          </div>
-                        )}
-                        <div className="meta-item">
-                          <span className="meta-label">Created</span>
-                          <span className="meta-value">{formatDate(goal.createdAt)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <GoalCard 
+                    key={goal.id}
+                    goal={goal}
+                    onDelete={handleDeleteGoal}
+                    onNavigate={navigate}
+                  />
                 ))}
               </div>
             )}
@@ -434,7 +455,6 @@ const DashboardPage: React.FC = () => {
         onCancel={() => { setConfirmOpen(false); setGoalToDelete(null); }}
       />
     </div>
-  </>
   );
 };
 
