@@ -260,23 +260,27 @@ const DashboardPage: React.FC = () => {
             ) : (
               <div className="goals-grid">
                 {goals.map((goal) => (
-                  <div key={goal.id} className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}>
-                                      <div className="goal-card__content">
-                    <div className="goal-card__header">
-                      <h3 className="goal-card__title">{goal.title}</h3>
-                    </div>
-                    
-                    <button
-                      className="goal-card__delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteGoal(goal.id, goal.title);
-                      }}
-                      disabled={deleteGoalMutation.isPending}
-                      title="Delete goal"
-                    >
-                      🗑️
-                    </button>
+                  <div 
+                    key={goal.id} 
+                    className={`goal-card ${goal.completed ? 'goal-card--completed' : ''}`}
+                    onClick={() => navigate(`/goal/${goal.id}`)}
+                  >
+                    <div className="goal-card__content">
+                      <div className="goal-card__header">
+                        <h3 className="goal-card__title">{goal.title}</h3>
+                      </div>
+                      
+                      <button
+                        className="goal-card__delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGoal(goal.id, goal.title);
+                        }}
+                        disabled={deleteGoalMutation.isPending}
+                        title="Delete goal"
+                      >
+                        🗑️
+                      </button>
                       
                       <span className={`goal-card__priority goal-card__priority--${goal.priority.toLowerCase()}`}>
                         {goal.priority}
@@ -328,10 +332,6 @@ const DashboardPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    <Link to={`/goal/${goal.id}`} className="goal-card__link">
-                      <span className="sr-only">View goal details</span>
-                    </Link>
                   </div>
                 ))}
               </div>

@@ -16,6 +16,9 @@ const Header: React.FC = () => {
           
           {/* Desktop Actions */}
           <div className="header__actions">
+            <Link to="/dashboard" className="header__action-btn">
+              📱 App
+            </Link>
             <Link to="/" className="header__action-btn">
               Download
             </Link>

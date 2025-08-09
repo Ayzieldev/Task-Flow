@@ -103,7 +103,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 100;
 
     &:hover {
       opacity: 1;
@@ -124,27 +124,7 @@
     }
   }
 
-  &__link {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    cursor: pointer;
-    pointer-events: none;
-    
-    // Make the link clickable but exclude the delete button area
-    &::after {
-      content: '';
-      position: absolute;
-      top: $spacing-sm;
-      right: $spacing-sm;
-      width: 36px;
-      height: 36px;
-      pointer-events: none;
-    }
-  }
+
 
   &__priority {
     font-size: $font-size-sm;
