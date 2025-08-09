@@ -19,12 +19,7 @@ const Header: React.FC = () => {
             <Link to="/" className="header__action-btn">
               Download
             </Link>
-            <Link to="/" className="header__action-btn">
-             Register
-            </Link>
-            <Link to="/dashboard" className="header__action-btn">
-              Log In
-            </Link>
+            
             <button
               className="header__theme-toggle"
               onClick={toggleTheme}

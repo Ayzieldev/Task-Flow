@@ -46,15 +46,17 @@ export const goalService = {
     await delay(500);
     const goals = getGoalsFromStorage();
     
+    const localId = Date.now().toString();
     const newGoal: Goal = {
       ...goalData,
-      id: Date.now().toString(),
+      id: localId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     goals.push(newGoal);
     saveGoalsToStorage(goals);
+
     return newGoal;
   },
 
@@ -76,6 +78,7 @@ export const goalService = {
 
     goals[goalIndex] = updatedGoal;
     saveGoalsToStorage(goals);
+
     return updatedGoal;
   },
 

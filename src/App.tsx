@@ -40,8 +40,8 @@ const App: React.FC = () => {
               </main>
               <Footer />
               <RewardAnimationWrapper />
-            </div>
-          </Router>
+               </div>
+            </Router>
         </RewardProvider>
       </ThemeProvider>
     </QueryClientProviderWrapper>

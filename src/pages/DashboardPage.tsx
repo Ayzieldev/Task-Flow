@@ -145,6 +145,8 @@ const DashboardPage: React.FC = () => {
             <p>Track your progress and manage your goals effectively</p>
           </div>
           
+
+          
           <div className="dashboard-stats">
             <div className="stat-card">
               <div className="stat-icon">📊</div>
