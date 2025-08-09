@@ -19,14 +19,15 @@ const Header: React.FC = () => {
       <div className="container">
         <div className="header__content">
           <Link to="/" className="header__logo">
-            <h1>Goal Tracker</h1>
+            <img 
+              src={theme === 'light' ? '/Images/light-mode-logo.png' : '/Images/dark-mode-logo.png'}
+              alt="Goal Tracker"
+              className="header__logo-img"
+            />
           </Link>
           
           {/* Desktop Actions */}
           <div className="header__actions">
-            <Link to="/dashboard" className="header__action-btn">
-              📱 App
-            </Link>
             <button
               className="header__action-btn"
               onClick={handleDownload}

@@ -43,6 +43,8 @@
     color: var(--color-text);
     position: relative;
     z-index: 3;
+    display: flex;
+    align-items: center;
     
     &::before {
       content: '';
@@ -51,7 +53,7 @@
       left: -10px;
       right: -10px;
       bottom: -5px;
-      background: var(--gradient-primary);
+      background: none;
       border-radius: $border-radius-lg;
       opacity: 0.1;
       z-index: -1;
@@ -61,17 +63,17 @@
     &:hover::before {
       opacity: 0.2;
     }
-    
-    h1 {
-      margin: 0;
-      font-size: $font-size-xl;
-      font-weight: $font-weight-bold;
-      background: var(--gradient-text);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      background-size: 200% 200%;
-      animation: gradient-shift 3s ease-in-out infinite;
+  }
+  
+  &__logo-img {
+    height: 100%;
+    max-height: 65px;
+    width: auto;
+    object-fit: contain;
+    transition: transform $transition-fast;
+    background-color: none;
+    &:hover {
+      transform: scale(1.05);
     }
   }
   
