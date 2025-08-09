@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useReward } from '@/context/RewardContext';
 import TaskBlockComponent from '../components/design/TaskBlock/TaskBlock';
 import TaskForm from '../components/design/TaskForm/TaskForm';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
 import { useGoal, useUpdateGoal, useAddTaskBlock, useUpdateTaskBlock, useDeleteTaskBlock, useAddSubtask, useUpdateSubtask, useDeleteSubtask, useUpdateGoalProgress } from '@/hooks/useGoals';
 import { Goal, TaskBlock, Subtask } from '@/types';
+import ConfirmDialog from '@/components/design/ConfirmDialog/ConfirmDialog';
 
 interface TaskFormData {
   title: string;
@@ -19,6 +21,7 @@ const GoalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const { triggerGoalReward } = useReward();
 
   // React Query hooks
   const { data: goal, isLoading, error } = useGoal(id!);
@@ -31,12 +34,26 @@ const GoalDetailPage: React.FC = () => {
   const deleteSubtaskMutation = useDeleteSubtask();
   const updateGoalProgressMutation = useUpdateGoalProgress();
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
+
   // Redirect if goal not found
   React.useEffect(() => {
     if (error && !isLoading) {
       navigate('/');
     }
   }, [error, isLoading, navigate]);
+
+  // Check for goal completion and trigger reward
+  useEffect(() => {
+    if (goal && !goal.completed) {
+      const progress = calculateProgress(goal.taskBlocks);
+      if (progress === 100) {
+        // Goal is completed! Trigger reward
+        triggerGoalReward(goal.reward);
+      }
+    }
+  }, [goal, triggerGoalReward]);
 
   const calculateProgress = (taskBlocks: TaskBlock[]): number => {
     if (taskBlocks.length === 0) return 0;
@@ -156,6 +173,18 @@ const GoalDetailPage: React.FC = () => {
       {
         onSuccess: () => {
           updateGoalProgressMutation.mutate(goal.id);
+          
+          // Check if goal is completed after task update
+          const updatedGoal = {
+            ...goal,
+            taskBlocks: goal.taskBlocks.map(t => 
+              t.id === taskId ? updatedTask : t
+            )
+          };
+          const newProgress = calculateProgress(updatedGoal.taskBlocks);
+          if (newProgress === 100 && !goal.completed) {
+            triggerGoalReward(goal.reward);
+          }
         },
       }
     );
@@ -183,14 +212,31 @@ const GoalDetailPage: React.FC = () => {
           {
             onSuccess: () => {
               // After unlocking previous subtask, update the current subtask
-              updateSubtaskMutation.mutate(
-                { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
-                {
-                  onSuccess: () => {
-                    updateGoalProgressMutation.mutate(goal.id);
-                  },
-                }
-              );
+                                   updateSubtaskMutation.mutate(
+                   { goalId: goal.id, taskBlockId: taskId, subtaskId, updates: updatedSubtask },
+                   {
+                     onSuccess: () => {
+                       updateGoalProgressMutation.mutate(goal.id);
+                       
+                       // Check if goal is completed after subtask update
+                       const updatedGoal = {
+                         ...goal,
+                         taskBlocks: goal.taskBlocks.map(t => 
+                           t.id === taskId ? {
+                             ...t,
+                             subtasks: t.subtasks?.map(s => 
+                               s.id === subtaskId ? updatedSubtask : s
+                             )
+                           } : t
+                         )
+                       };
+                       const newProgress = calculateProgress(updatedGoal.taskBlocks);
+                       if (newProgress === 100 && !goal.completed) {
+                         triggerGoalReward(goal.reward);
+                       }
+                     },
+                   }
+                 );
             },
           }
         );
@@ -203,12 +249,29 @@ const GoalDetailPage: React.FC = () => {
       {
         onSuccess: () => {
           updateGoalProgressMutation.mutate(goal.id);
+          
+          // Check if goal is completed after subtask update
+          const updatedGoal = {
+            ...goal,
+            taskBlocks: goal.taskBlocks.map(t => 
+              t.id === taskId ? {
+                ...t,
+                subtasks: t.subtasks?.map(s => 
+                  s.id === subtaskId ? updatedSubtask : s
+                )
+              } : t
+            )
+          };
+          const newProgress = calculateProgress(updatedGoal.taskBlocks);
+          if (newProgress === 100 && !goal.completed) {
+            triggerGoalReward(goal.reward);
+          }
         },
       }
     );
   };
 
-  const deleteTask = (taskId: string) => {
+  const performDeleteTask = (taskId: string) => {
     if (!goal) return;
 
     deleteTaskBlockMutation.mutate(
@@ -219,6 +282,19 @@ const GoalDetailPage: React.FC = () => {
         },
       }
     );
+  };
+
+  const requestDeleteTask = (taskId: string) => {
+    setTaskToDeleteId(taskId);
+    setConfirmOpen(true);
+  };
+
+  const confirmDeleteTask = () => {
+    if (taskToDeleteId) {
+      performDeleteTask(taskToDeleteId);
+    }
+    setConfirmOpen(false);
+    setTaskToDeleteId(null);
   };
 
   const editTask = (taskId: string, newTitle: string) => {
@@ -306,12 +382,13 @@ const GoalDetailPage: React.FC = () => {
   }
 
   return (
+    <>
     <div className="goal-detail-page">
       <div className="container">
         <div className="goal-header">
           <button 
             className="btn btn--secondary back-btn"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard?tab=goals')}
           >
             ← Back to Goals
           </button>
@@ -409,7 +486,7 @@ const GoalDetailPage: React.FC = () => {
                      stepByStepMode={goal.stepByStep}
                      onToggle={toggleTask}
                      onSubtaskToggle={toggleSubtask}
-                     onDelete={deleteTask}
+                      onDelete={requestDeleteTask}
                      onEdit={editTask}
                      onSubtaskEdit={editSubtask}
                      onSubtaskDelete={deleteSubtask}
@@ -420,6 +497,18 @@ const GoalDetailPage: React.FC = () => {
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      isOpen={confirmOpen}
+      title="Delete Task"
+      message={`Are you sure you want to delete "${goal.taskBlocks.find(t => t.id === taskToDeleteId)?.title ?? 'this task'}"? This action cannot be undone.`}
+      isDanger
+      confirmLabel="Delete"
+      cancelLabel="Cancel"
+      isLoading={deleteTaskBlockMutation.isPending}
+      onConfirm={confirmDeleteTask}
+      onCancel={() => { setConfirmOpen(false); setTaskToDeleteId(null); }}
+    />
+  </>
   );
 };
 

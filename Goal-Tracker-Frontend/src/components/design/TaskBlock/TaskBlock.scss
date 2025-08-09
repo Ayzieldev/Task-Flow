@@ -16,10 +16,15 @@
   &--completed {
     background-color: var(--color-success-light);
     border-color: var(--color-success);
+    animation: completedPulse 0.6s ease-out;
     
     .task-block__title {
       text-decoration: line-through;
       color: var(--color-text-muted);
+    }
+    
+    .task-block__checkmark {
+      animation: checkmarkPop 0.3s ease-out;
     }
   }
   
@@ -250,10 +255,15 @@
     
     &--completed {
       opacity: 0.7;
+      animation: completedPulse 0.6s ease-out;
       
       .task-block__subtask-title {
         text-decoration: line-through;
         color: var(--color-text-muted);
+      }
+      
+      .task-block__subtask-checkmark {
+        animation: checkmarkPop 0.3s ease-out;
       }
     }
     
@@ -447,4 +457,32 @@
       justify-content: flex-end;
     }
   }
-} 
+}
+
+// Animations for task completion
+@keyframes completedPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

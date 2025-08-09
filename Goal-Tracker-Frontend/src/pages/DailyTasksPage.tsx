@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@/components/design/LoadingSpinner/LoadingSpinner';
 import ErrorMessage from '@/components/design/ErrorMessage/ErrorMessage';
 import { useDailyTasks, useToggleDailyTask, useDeleteDailyTask, useTaskStatistics } from '@/hooks/useTasks';
 import { DailyTask } from '@/types';
+import ConfirmDialog from '@/components/design/ConfirmDialog/ConfirmDialog';
 
 const DailyTasksPage: React.FC = () => {
   const navigate = useNavigate();
@@ -14,14 +15,24 @@ const DailyTasksPage: React.FC = () => {
   const toggleDailyTaskMutation = useToggleDailyTask();
   const deleteDailyTaskMutation = useDeleteDailyTask();
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<DailyTask | null>(null);
+
   const handleToggleTask = (taskId: string) => {
     toggleDailyTaskMutation.mutate(taskId);
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      deleteDailyTaskMutation.mutate(taskId);
+  const handleDeleteTask = (task: DailyTask) => {
+    setTaskToDelete(task);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (taskToDelete) {
+      deleteDailyTaskMutation.mutate(taskToDelete.id);
     }
+    setConfirmOpen(false);
+    setTaskToDelete(null);
   };
 
   const getStreakEmoji = (streak: number) => {
@@ -59,6 +70,7 @@ const DailyTasksPage: React.FC = () => {
   }
 
   return (
+    <>
     <div className="daily-tasks-page">
       <div className="container">
         <div className="page-header">
@@ -151,9 +163,9 @@ const DailyTasksPage: React.FC = () => {
                     </div>
 
                     <div className="task-actions">
-                      <button
+                       <button
                         className="btn btn--danger btn--sm"
-                        onClick={() => handleDeleteTask(task.id)}
+                        onClick={() => handleDeleteTask(task)}
                         disabled={deleteDailyTaskMutation.isPending}
                       >
                         Delete
@@ -167,6 +179,19 @@ const DailyTasksPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${taskToDelete?.title ?? 'this task'}"? This action cannot be undone.`}
+        isDanger
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        isLoading={deleteDailyTaskMutation.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => { setConfirmOpen(false); setTaskToDelete(null); }}
+      />
+  </>
   );
 };
 

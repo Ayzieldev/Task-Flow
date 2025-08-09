@@ -9,12 +9,12 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const Modal: React.FC<ModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
-  size = 'md' 
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
 }) => {
   if (!isOpen) return null;
 
@@ -25,21 +25,19 @@ const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleBackdropClick}>
-      <div className={`modal modal--${size}`}>
-        <div className="modal-header">
-          <h3 className="modal-title">{title}</h3>
-          <button 
-            className="modal-close-btn" 
+    <div className="app-modal-overlay" onClick={handleBackdropClick}>
+      <div className={`app-modal app-modal--${size}`}>
+        <div className="app-modal__header">
+          <h3 className="app-modal__title">{title}</h3>
+          <button
+            className="app-modal__close"
             onClick={onClose}
             aria-label="Close modal"
           >
             ×
           </button>
         </div>
-        <div className="modal-content">
-          {children}
-        </div>
+        <div className="app-modal__content">{children}</div>
       </div>
     </div>
   );
